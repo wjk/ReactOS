@@ -1,0 +1,1 @@
+PR #4097 upstream ("[NTOS:SE] Validate the SID lengths when capturing them")
