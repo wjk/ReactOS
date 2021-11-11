@@ -1,5 +1,6 @@
 compile_commands.json
 output-*
+cmake-build-*
 modules/optional
 modules/bootcd_extras
 modules/livecd_extras
@@ -11,4 +12,5 @@ modules/[Aa][Hh][Kk]_[Tt]ests
 .project
 .settings
 .vscode
+.idea
 sdk/tools/winesync/winesync.cfg
