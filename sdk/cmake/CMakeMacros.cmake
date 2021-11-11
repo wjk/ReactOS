@@ -466,37 +466,14 @@ function(create_iso_lists)
          INPUT ${REACTOS_BINARY_DIR}/boot/bootcdregtest.cmake.lst)
 endfunction()
 
-# Create module_clean targets
-function(add_clean_target _target)
-    set(_clean_working_directory ${CMAKE_CURRENT_BINARY_DIR})
-    if(CMAKE_GENERATOR STREQUAL "Unix Makefiles" OR CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
-        set(_clean_command make clean)
-    elseif(CMAKE_GENERATOR STREQUAL "NMake Makefiles")
-        set(_clean_command nmake /nologo clean)
-    elseif(CMAKE_GENERATOR STREQUAL "Ninja")
-        set(_clean_command ninja -t clean ${_target})
-        set(_clean_working_directory ${REACTOS_BINARY_DIR})
-    endif()
-    add_custom_target(${_target}_clean
-        COMMAND ${_clean_command}
-        WORKING_DIRECTORY ${_clean_working_directory}
-        COMMENT "Cleaning ${_target}")
-endfunction()
-
 if(NOT MSVC_IDE)
     function(add_library name)
         _add_library(${name} ${ARGN})
-        add_clean_target(${name})
         # cmake adds a module_EXPORTS define when compiling a module or a shared library. We don't use that.
         get_target_property(_type ${name} TYPE)
         if(_type MATCHES SHARED_LIBRARY|MODULE_LIBRARY)
             set_target_properties(${name} PROPERTIES DEFINE_SYMBOL "")
         endif()
-    endfunction()
-
-    function(add_executable name)
-        _add_executable(${name} ${ARGN})
-        add_clean_target(${name})
     endfunction()
 elseif(USE_FOLDER_STRUCTURE)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
