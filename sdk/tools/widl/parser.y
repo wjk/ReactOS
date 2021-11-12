@@ -321,6 +321,8 @@ static typelib_t *current_typelib;
 %right '!' '~' CAST PPTR POS NEG ADDRESSOF tSIZEOF
 %left '.' MEMBERPTR '[' ']'
 
+%define parse.error verbose
+
 %%
 
 input: gbl_statements m_acf			{ fix_incomplete();
