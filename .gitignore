@@ -1,6 +1,7 @@
 compile_commands.json
 output-*
 cmake-build-*
+local.cmake
 modules/optional
 modules/bootcd_extras
 modules/livecd_extras
