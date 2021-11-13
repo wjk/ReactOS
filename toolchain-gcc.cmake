@@ -1,3 +1,6 @@
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/local.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/local.cmake)
+endif()
 
 # pass variables necessary for the toolchain (needed for try_compile)
 set(CMAKE_TRY_COMPILE_PLATFORM_VARIABLES ARCH)
