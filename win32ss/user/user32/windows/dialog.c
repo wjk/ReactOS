@@ -795,7 +795,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     {
         HDC dc = GetDC(0);
 
-        if (template.pointSize == 0x7fff)
+        if (template.pointSize == 0x7fff || template.style & DS_FIXEDSYS)
         {
             /* We get the message font from the non-client metrics */
             NONCLIENTMETRICSW ncMetrics;
@@ -2104,7 +2104,7 @@ EndDialog(
        owner = GetAncestor( hwnd, GA_PARENT);
     }
     else
-       owner = GetWindow( hwnd, GW_OWNER );    
+       owner = GetWindow( hwnd, GW_OWNER );
 
     if (owner)
         EnableWindow( owner, TRUE );
@@ -2186,7 +2186,7 @@ GetDlgItem(
     HWND *list;
     HWND ret = 0;
 
-    if (!hDlg) return 0; 
+    if (!hDlg) return 0;
 
     list = WIN_ListChildren(hDlg);
     if (!list) return 0;
@@ -2401,7 +2401,7 @@ GetNextDlgTabItem(
   BOOL bPrevious)
 {
     PWND pWindow;
-      
+
     pWindow = ValidateHwnd( hDlg );
     if (!pWindow) return NULL;
     if (hCtl)
@@ -2570,7 +2570,7 @@ IsDialogMessageW(
                 {
                     fIsDialog = (GETDLGINFO(hDlg) != NULL);
                 }
-  
+
                 SendMessageW(hDlg, WM_CHANGEUISTATE, MAKEWPARAM(UIS_CLEAR, UISF_HIDEFOCUS), 0);
 
                 /* I am not sure under which circumstances the TAB is handled
