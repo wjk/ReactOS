@@ -983,7 +983,7 @@ TRASH_TrashFile(LPCWSTR wszPath)
 }
 
 /*************************************************************************
- * SHUpdateCRecycleBinIcon                                [SHELL32.@]
+ * SHUpdateRecycleBinIcon                                [SHELL32.@]
  *
  * Undocumented
  */
