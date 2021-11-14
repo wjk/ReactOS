@@ -989,8 +989,15 @@ TRASH_TrashFile(LPCWSTR wszPath)
  */
 EXTERN_C HRESULT WINAPI SHUpdateRecycleBinIcon(void)
 {
-    FIXME("stub\n");
+    CComHeapPtr<ITEMIDLIST_ABSOLUTE> pidlRecycleBin;
+    HRESULT hr = SHGetFolderLocation(NULL, CSIDL_BITBUCKET, NULL, 0, &pidlRecycleBin);
+    if (FAILED(hr))
+        return hr;
 
+    // m_pData is referenced directly to ensure that the pointer to
+    // the pidl is given to SHChangeNotify(), not a pointer to the
+    // C++ object that wraps it.
+    SHChangeNotify(SHCNE_UPDATEITEM, SHCNF_IDLIST | SHCNF_FLUSH, pidlRecycleBin.m_pData, NULL);
     return S_OK;
 }
 
