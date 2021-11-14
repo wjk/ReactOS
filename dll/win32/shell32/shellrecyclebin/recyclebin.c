@@ -3,7 +3,7 @@
  * LICENSE:     GPL v2 - See COPYING in the top level directory
  * FILE:        lib/recyclebin/recyclebin.c
  * PURPOSE:     Public interface
- * PROGRAMMERS: Copyright 2006-2007 Hervé Poussineau (hpoussin@reactos.org)
+ * PROGRAMMERS: Copyright 2006-2007 Hervï¿½ Poussineau (hpoussin@reactos.org)
  */
 
 #include "recyclebin_private.h"
@@ -63,6 +63,8 @@ cleanup:
     return ret;
 }
 
+extern HRESULT WINAPI SHUpdateRecycleBinIcon(void);
+
 BOOL WINAPI
 DeleteFileToRecycleBinW(
     IN LPCWSTR FileName)
@@ -78,6 +80,7 @@ DeleteFileToRecycleBinW(
 
     hr = IRecycleBin_DeleteFile(prb, FileName);
     IRecycleBin_Release(prb);
+    SHUpdateRecycleBinIcon();
 
 cleanup:
     if (SUCCEEDED(hr))
@@ -156,6 +159,7 @@ EmptyRecycleBinW(
 
     hr = IRecycleBin_EmptyRecycleBin(prb);
     IRecycleBin_Release(prb);
+    SHUpdateRecycleBinIcon();
 
 cleanup:
     if (SUCCEEDED(hr))
