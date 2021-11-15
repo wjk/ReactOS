@@ -64,8 +64,6 @@ cleanup:
     return ret;
 }
 
-extern HRESULT WINAPI SHUpdateRecycleBinIcon(void);
-
 BOOL WINAPI
 DeleteFileToRecycleBinW(
     IN LPCWSTR FileName)
