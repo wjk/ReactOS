@@ -128,5 +128,5 @@ set(USE_DUMMY_PSEH FALSE CACHE BOOL
                     -D_SETUPAPI_VER=0x502
                     -DMINGW_HAS_SECURE_API=1)
 ]]
-set(TARGET_WINVER 0x502 CACHE BOOL "The Windows platform version to target. As specified in _WIN32_WINNT.")
-set(TARGET_WINVER_IE 0x600 CACHE BOOL "The Internet Explorer platform version to target. As specified in _WIN32_IE.")
+set(TARGET_WINVER 0x502 CACHE BOOL "The Windows platform version to target. Value of _WIN32_WINNT. Include the leading 0x.")
+set(TARGET_WINVER_IE 0x600 CACHE BOOL "The Internet Explorer platform version to target. Value of _WIN32_IE. Include the leading 0x.")
