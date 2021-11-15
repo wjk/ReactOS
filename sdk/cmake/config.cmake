@@ -120,13 +120,5 @@ endif()
 set(USE_DUMMY_PSEH FALSE CACHE BOOL
 "Whether to disable PSEH support.")
 
-#[[
-    add_definitions(-DWINVER=0x502
-                    -D_WIN32_IE=0x600
-                    -D_WIN32_WINNT=0x502
-                    -D_WIN32_WINDOWS=0x502
-                    -D_SETUPAPI_VER=0x502
-                    -DMINGW_HAS_SECURE_API=1)
-]]
 set(TARGET_WINVER 0x502 CACHE BOOL "The Windows platform version to target. Value of _WIN32_WINNT. Include the leading 0x.")
 set(TARGET_WINVER_IE 0x600 CACHE BOOL "The Internet Explorer platform version to target. Value of _WIN32_IE. Include the leading 0x.")
