@@ -148,6 +148,8 @@ IopPerformSynchronousRequest(IN PDEVICE_OBJECT DeviceObject,
         if (Status != STATUS_PENDING)
         {
             /* Complete it ourselves */
+            NormalRoutine = NULL;
+            NormalContext = NULL;
             ASSERT(!Irp->PendingReturned);
             KeRaiseIrql(APC_LEVEL, &OldIrql);
             IopCompleteRequest(&Irp->Tail.Apc,
@@ -2640,6 +2642,8 @@ NtQueryInformationFile(IN HANDLE FileHandle,
         Irp->UserIosb = IoStatusBlock;
 
         /* The IRP wasn't completed, complete it ourselves */
+        NormalRoutine = NULL;
+        NormalContext = NULL;
         KeRaiseIrql(APC_LEVEL, &OldIrql);
         IopCompleteRequest(&Irp->Tail.Apc,
                            &NormalRoutine,
@@ -3480,6 +3484,8 @@ NtSetInformationFile(IN HANDLE FileHandle,
         Irp->UserIosb = IoStatusBlock;
 
         /* The IRP wasn't completed, complete it ourselves */
+        NormalRoutine = NULL;
+        NormalContext = NULL;
         KeRaiseIrql(APC_LEVEL, &OldIrql);
         IopCompleteRequest(&Irp->Tail.Apc,
                            &NormalRoutine,
@@ -4253,7 +4259,7 @@ NtQueryVolumeInformationFile(IN HANDLE FileHandle,
     /* This is to be handled by the kernel, not by FSD */
     else if (FsInformationClass == FileFsDriverPathInformation)
     {
-        PFILE_FS_DRIVER_PATH_INFORMATION DriverPathInfo;
+        _SEH2_VOLATILE PFILE_FS_DRIVER_PATH_INFORMATION DriverPathInfo = NULL;
 
         _SEH2_TRY
         {
@@ -4264,7 +4270,9 @@ NtQueryVolumeInformationFile(IN HANDLE FileHandle,
             RtlCopyMemory(DriverPathInfo, FsInformation, Length);
 
             /* Is the driver in the IO path? */
-            Status = IopGetDriverPathInformation(FileObject, DriverPathInfo, Length);
+            Status = IopGetDriverPathInformation(FileObject,
+                                                 (PFILE_FS_DRIVER_PATH_INFORMATION)DriverPathInfo,
+                                                 Length);
             /* We failed, don't continue execution */
             if (!NT_SUCCESS(Status))
             {
