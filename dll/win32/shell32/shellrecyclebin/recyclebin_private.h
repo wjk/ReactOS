@@ -50,4 +50,7 @@ HRESULT RecycleBinGenericEnum_Constructor(OUT IRecycleBinEnumList **pprbel);
 
 HRESULT RecycleBin5_Constructor(IN LPCWSTR VolumePath, OUT IUnknown **ppUnknown);
 
+/* FIXME: Use undocshell.h here, once I can include it in a plain-C file */
+HRESULT WINAPI SHUpdateRecycleBinIcon(void);
+
 #endif /* _RECYCLEBIN_PRIVATE_H_ */
