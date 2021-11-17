@@ -1061,13 +1061,6 @@ TRASH_TrashFile(LPCWSTR wszPath)
  */
 EXTERN_C HRESULT WINAPI SHUpdateRecycleBinIcon(void)
 {
-    /*
-     * This function invokes SHChangeNotify() in order to have the shell
-     * requery the recycle bin shell object for its icon. This then triggers
-     * a check in CGuidItemExtractIcon_CreateInstance, which chooses between
-     * the two icons as necessary.
-     */
-
     CComHeapPtr<ITEMIDLIST_ABSOLUTE> pidlRecycleBin;
     HRESULT hr = SHGetFolderLocation(NULL, CSIDL_BITBUCKET, NULL, 0, &pidlRecycleBin);
     if (FAILED(hr))
