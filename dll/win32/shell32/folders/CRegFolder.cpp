@@ -148,12 +148,27 @@ HRESULT CGuidItemExtractIcon_CreateInstance(LPCITEMIDLIST pidl, REFIID iid, LPVO
 
     if (_ILIsBitBucket(pidl))
     {
-        CComPtr<IExtractIconW> extractIcon;
-        hr = CoCreateInstance(CLSID_RecycleBin, NULL, CLSCTX_INPROC, IID_PPV_ARG(IExtractIconW, &extractIcon));
-        if (FAILED(hr)) return hr;
+        CComHeapPtr<ITEMIDLIST_ABSOLUTE> pidlRecycleBin;
+        hr = SHGetFolderLocation(NULL, CSIDL_BITBUCKET, NULL, 0, &pidlRecycleBin);
+        if (FAILED(hr))
+            return hr;
 
-        extractIcon->QueryInterface(iid, ppvOut);
-        return S_OK;
+        CComPtr<IShellItem> shellItem;
+        hr = SHCreateShellItem(NULL, NULL, pidlRecycleBin.m_pData, &shellItem);
+        if (FAILED(hr))
+            return hr;
+
+        CComPtr<IShellFolder> shellFolder;
+        hr = shellItem->QueryInterface(IID_PPV_ARG(IShellFolder, &shellFolder));
+        if (FAILED(hr))
+            return hr;
+
+        CComPtr<IExtractIconW> extractIcon;
+        hr = shellFolder->GetUIObjectOf(NULL, 0, NULL, IID_IExtractIconW, NULL, (void **)&extractIcon);
+        if (FAILED(hr))
+            return hr;
+
+        return extractIcon->QueryInterface(iid, ppvOut);
     }
     else
     {
