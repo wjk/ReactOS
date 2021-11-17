@@ -107,9 +107,45 @@ fallback:
     CComPtr<IDefaultExtractIconInit> initIcon;
     HRESULT hr = SHCreateDefaultExtractIcon(IID_PPV_ARG(IDefaultExtractIconInit, &initIcon));
     if (FAILED_UNEXPECTEDLY(hr))
+    {
+        ERR("SHCreateDefaultExtractIcon() returned 0x%16X", hr);
         return hr;
+    }
 
-    initIcon->SetNormalIcon(swShell32Name, 0);
+    ULONG valueSize = MAX_PATH * 2; // should be big enough for a string like "@C:\ReactOS\system32\shell32.dll,-34"
+    CComHeapPtr<TCHAR> valueBuffer;
+    valueBuffer.AllocateBytes(valueSize * sizeof(TCHAR));
+    RtlZeroMemory(valueBuffer.m_pData, valueSize * sizeof(TCHAR));
+
+    LPCWSTR keyName = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\CLSID\\{645FF040-5081-101B-9F08-00AA002F954E}\\DefaultIcon";
+    CRegKey classKey;
+    if (classKey.Open(HKEY_CLASSES_ROOT, keyName) == ERROR_SUCCESS &&
+        classKey.QueryStringValue(NULL, valueBuffer.m_pData, &valueSize) == ERROR_SUCCESS)
+    {
+        if (valueBuffer.m_pData[0] == L'@')
+        {
+            DWORD resourceIndex = -1;
+
+            PWCHAR pch = wcsrchr(valueBuffer.m_pData, L',');
+            if (pch)
+            {
+                *pch = 0;
+                resourceIndex = _wtoi(pch + 1);
+            }
+
+            initIcon->SetNormalIcon(valueBuffer + 1, resourceIndex);
+            return initIcon->QueryInterface(riid, ppvOut);
+        }
+        else
+        {
+            // FIXME: What icon index should I use in this situation (path not resource reference)?
+            initIcon->SetNormalIcon(valueBuffer, 0);
+            return initIcon->QueryInterface(riid, ppvOut);
+        }
+    }
+
+    ERR("Could not read Recycle Bin icon, using fallback");
+    initIcon->SetNormalIcon(swShell32Name, -IDI_SHELL_EMPTY_RECYCLE_BIN);
 
     return initIcon->QueryInterface(riid, ppvOut);
 }

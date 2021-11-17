@@ -123,8 +123,6 @@ HRESULT CGuidItemExtractIcon_CreateInstance(LPCITEMIDLIST pidl, REFIID iid, LPVO
     CComPtr<IDefaultExtractIconInit>    initIcon;
     HRESULT hr;
     GUID const * riid;
-    int icon_idx;
-    WCHAR wTemp[MAX_PATH];
 
     hr = SHCreateDefaultExtractIcon(IID_PPV_ARG(IDefaultExtractIconInit,&initIcon));
     if (FAILED(hr))
@@ -148,35 +146,14 @@ HRESULT CGuidItemExtractIcon_CreateInstance(LPCITEMIDLIST pidl, REFIID iid, LPVO
              riid->Data4[0], riid->Data4[1], riid->Data4[2], riid->Data4[3],
              riid->Data4[4], riid->Data4[5], riid->Data4[6], riid->Data4[7]);
 
-    const WCHAR* iconname = NULL;
     if (_ILIsBitBucket(pidl))
     {
-        CComPtr<IEnumIDList> EnumIDList;
-        CoInitialize(NULL);
+        CComPtr<IExtractIconW> extractIcon;
+        hr = CoCreateInstance(CLSID_RecycleBin, NULL, CLSCTX_INPROC, IID_PPV_ARG(IExtractIconW, &extractIcon));
+        if (FAILED(hr)) return hr;
 
-        CComPtr<IShellFolder2> psfRecycleBin;
-        CComPtr<IShellFolder> psfDesktop;
-        hr = SHGetDesktopFolder(&psfDesktop);
-
-        if (SUCCEEDED(hr))
-            hr = psfDesktop->BindToObject(pidl, NULL, IID_PPV_ARG(IShellFolder2, &psfRecycleBin));
-        if (SUCCEEDED(hr))
-            hr = psfRecycleBin->EnumObjects(NULL, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, &EnumIDList);
-
-        ULONG itemcount;
-        LPITEMIDLIST pidl = NULL;
-        if (SUCCEEDED(hr) && (hr = EnumIDList->Next(1, &pidl, &itemcount)) == S_OK)
-        {
-            CoTaskMemFree(pidl);
-            iconname = L"Full";
-        } else {
-            iconname = L"Empty";
-        }
-    }
-
-    if (HCR_GetIconW(xriid, wTemp, iconname, MAX_PATH, &icon_idx))
-    {
-        initIcon->SetNormalIcon(wTemp, icon_idx);
+        extractIcon->QueryInterface(iid, ppvOut);
+        return S_OK;
     }
     else
     {
