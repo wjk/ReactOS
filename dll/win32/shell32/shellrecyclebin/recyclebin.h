@@ -222,7 +222,7 @@ DECLARE_INTERFACE_(IRecycleBinEnumList, IUnknown)
     STDMETHOD_(ULONG, Release)(THIS) PURE;
 
     /* IRecycleBinEnumList methods */
-    STDMETHOD(Next)(THIS_ DWORD celt, IRecycleBinFile **rgelt, DWORD *pceltFetched);
+    STDMETHOD(Next)(THIS_ DWORD celt, IRecycleBinFile **rgelt, DWORD *pceltFetched) PURE;
     STDMETHOD(Skip)(THIS_ DWORD celt) PURE;
     STDMETHOD(Reset)(THIS) PURE;
 
@@ -241,9 +241,9 @@ DECLARE_INTERFACE_(IRecycleBin, IUnknown)
     STDMETHOD_(ULONG, Release)(THIS) PURE;
 
     /* IRecycleBin methods */
-    STDMETHOD(DeleteFile)(THIS_ LPCWSTR szFileName);
-    STDMETHOD(EmptyRecycleBin)(THIS);
-    STDMETHOD(EnumObjects)(THIS_ IRecycleBinEnumList **ppEnumList);
+    STDMETHOD(DeleteFile)(THIS_ LPCWSTR szFileName) PURE;
+    STDMETHOD(EmptyRecycleBin)(THIS) PURE;
+    STDMETHOD(EnumObjects)(THIS_ IRecycleBinEnumList **ppEnumList) PURE;
 
     END_INTERFACE
 };
