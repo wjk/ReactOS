@@ -1054,6 +1054,113 @@ TRASH_TrashFile(LPCWSTR wszPath)
     return DeleteFileToRecycleBin(wszPath);
 }
 
+static
+BOOL
+TRASH_DirectoryIsFull(LPCWSTR pszDirectory)
+{
+    WCHAR szDir[MAX_PATH];
+    HANDLE hFind = INVALID_HANDLE_VALUE;
+    WIN32_FIND_DATA ffd;
+    size_t directoryLength;
+
+    StringCchLengthW(pszDirectory, MAX_PATH, &directoryLength);
+    if (directoryLength > (MAX_PATH) - 3)
+    {
+        SetLastError(ERROR_BAD_PATHNAME);
+        return FALSE;
+    }
+
+    StringCchCopyW(szDir, MAX_PATH, pszDirectory);
+    StringCchCatW(szDir, MAX_PATH, L"\\*");
+
+    hFind = FindFirstFile(szDir, &ffd);
+    if (hFind == INVALID_HANDLE_VALUE)
+    {
+        // SetLastError was already called in FindFirstFile.
+        return FALSE;
+    }
+
+    BOOL isFull = FALSE;
+    do
+    {
+        if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        {
+            BOOL bRet = TRASH_DirectoryIsFull(ffd.cFileName);
+            if (GetLastError() != NO_ERROR) break;
+
+            if (bRet)
+            {
+                isFull = TRUE;
+                break;
+            }
+        }
+        else
+        {
+            isFull = TRUE;
+        }
+    }
+    while (FindNextFile(hFind, &ffd) != 0);
+
+    if (GetLastError() == ERROR_NO_MORE_FILES)
+    {
+        // Empty directories also count as files for purposes of this test.
+        isFull = TRUE;
+    }
+    else
+    {
+        return FALSE;
+    }
+
+    SetLastError(NO_ERROR);
+    return isFull;
+}
+
+BOOL
+TRASH_IsTrashEmpty(LPCWSTR pszRoot OPTIONAL)
+{
+    // API contract:
+    // If GetLastError() != NO_ERROR upon return, the call failed and the return value is meaningless.
+    // Otherwise, the return value indicates whether the trash is empty or not.
+
+    HRESULT hr;
+
+    CComPtr<IRecycleBin> prb;
+    CComPtr<IRecycleBinEnumList> prbel;
+    CComPtr<IRecycleBinFile> prbf;
+
+    hr = GetDefaultRecycleBin(pszRoot, &prb);
+    if (FAILED(hr))
+    {
+        SetLastError(HRESULT_CODE(hr));
+        return FALSE;
+    }
+
+    hr = prb->EnumObjects(&prbel);
+    if (FAILED(hr))
+    {
+        SetLastError(HRESULT_CODE(hr));
+        return FALSE;
+    }
+
+    hr = prbel->Next(1, &prbf, NULL);
+    if (FAILED(hr))
+    {
+        SetLastError(HRESULT_CODE(hr));
+        return FALSE;
+    }
+
+    if (hr == S_FALSE)
+    {
+        // If we get here, the recycle bin is not empty. Don't bother looking any further.
+        SetLastError(NO_ERROR);
+        return FALSE;
+    }
+
+    // The recycle bin is empty only if we get here.
+    SetLastError(NO_ERROR);
+    return TRUE;
+}
+
 /*************************************************************************
  * SHUpdateRecycleBinIcon                                [SHELL32.@]
  *
