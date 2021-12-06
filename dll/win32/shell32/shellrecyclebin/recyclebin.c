@@ -217,7 +217,7 @@ EnumerateRecycleBinW(
 
     TRACE("(%s, %p, %p)\n", debugstr_w(pszRoot), pFnCallback, Context);
 
-    hr = GetDefaultRecycleBin(NULL, &prb);
+    hr = GetDefaultRecycleBin(pszRoot, &prb);
     if (!SUCCEEDED(hr))
         goto cleanup;
 
