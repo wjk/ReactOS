@@ -496,12 +496,13 @@ SeCaptureSidAndAttributesArray(
     ULONG ArraySize, RequiredLength, SidLength, i;
     ULONG TempArrayValidate, TempLengthValidate;
     PSID_AND_ATTRIBUTES SidAndAttributes;
-    PSID_VALIDATE ValidateArray;
+    _SEH2_VOLATILE PSID_VALIDATE ValidateArray;
     PUCHAR CurrentDest;
     PISID Sid;
     NTSTATUS Status;
     PAGED_CODE();
 
+    ValidateArray = NULL;
     SidAndAttributes = NULL;
     *CapturedSidAndAttributes = NULL;
     *ResultLength = 0;
@@ -608,7 +609,7 @@ SeCaptureSidAndAttributesArray(
                                                  TAG_SID_AND_ATTRIBUTES);
         if (SidAndAttributes == NULL)
         {
-            DPRINT1("SeCaptureSidAndAttributesArray(): Failed to allocate memory for SID and attributes array!\n");
+            DPRINT1("SeCaptureSidAndAttributesArray(): Failed to allocate memory for SID and attributes array (requested size -> %lu)!\n", RequiredLength);
             Status = STATUS_INSUFFICIENT_RESOURCES;
             goto Cleanup;
         }
@@ -654,8 +655,8 @@ SeCaptureSidAndAttributesArray(
                 SidAndAttributes[i].Sid = (PSID)CurrentDest;
                 RtlCopyMemory(CurrentDest, ValidateArray[i].ProbeSid, SidLength);
 
-                /* Obtain the SID for validation */
-                Sid = SrcSidAndAttributes[i].Sid;
+                /* Obtain the SID we've captured before for validation */
+                Sid = SidAndAttributes[i].Sid;
 
                 /* Validate that the subauthority count hasn't changed */
                 if (ValidateArray[i].SubAuthorityCount !=
@@ -679,7 +680,7 @@ SeCaptureSidAndAttributesArray(
                 }
 
                 /* Check that the SID is valid */
-                if (!RtlValidSid(SidAndAttributes[i].Sid))
+                if (!RtlValidSid(Sid))
                 {
                     DPRINT1("SeCaptureSidAndAttributesArray(): The SID is not valid!\n");
                     Status = STATUS_INVALID_SID;
@@ -726,7 +727,7 @@ Cleanup:
     if (!NT_SUCCESS(Status))
     {
         /* Check if we allocated a new array */
-        if (SidAndAttributes != AllocatedMem)
+        if ((SidAndAttributes != AllocatedMem) && (SidAndAttributes != NULL))
         {
             /* Free the array */
             ExFreePoolWithTag(SidAndAttributes, TAG_SID_AND_ATTRIBUTES);
@@ -737,7 +738,7 @@ Cleanup:
     }
 
     /* Free the temporary validation array */
-    if (PreviousMode != KernelMode)
+    if ((PreviousMode != KernelMode) && (ValidateArray != NULL))
     {
         ExFreePoolWithTag(ValidateArray, TAG_SID_VALIDATE);
     }

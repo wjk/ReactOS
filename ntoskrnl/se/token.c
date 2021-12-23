@@ -3582,11 +3582,13 @@ SeTokenCanImpersonate(
 
     /*
      * SecurityAnonymous and SecurityIdentification levels do not
-     * allow impersonation. If we get such levels from the call
-     * then something's seriously wrong.
+     * allow impersonation.
      */
-    ASSERT(ImpersonationLevel != SecurityAnonymous ||
-           ImpersonationLevel != SecurityIdentification);
+    if (ImpersonationLevel == SecurityAnonymous ||
+        ImpersonationLevel == SecurityIdentification)
+    {
+        return FALSE;
+    }
 
     /* Time to lock our tokens */
     SepAcquireTokenLockShared(ProcessToken);
@@ -6352,7 +6354,7 @@ NtOpenThreadTokenEx(
                                        KernelMode, &NewToken);
             if (!NT_SUCCESS(Status))
             {
-                DPRINT1("NtOpenThreadTokenEx(): Failed to duplicate the token (Status 0x%lx)\n");
+                DPRINT1("NtOpenThreadTokenEx(): Failed to duplicate the token (Status 0x%lx)\n", Status);
             }
 
             ObReferenceObject(NewToken);
@@ -6393,7 +6395,7 @@ NtOpenThreadTokenEx(
         Status = PsImpersonateClient(Thread, NewToken, FALSE, EffectiveOnly, ImpersonationLevel);
         if (!NT_SUCCESS(Status))
         {
-            DPRINT1("NtOpenThreadTokenEx(): Failed to impersonate the client (Status 0x%lx)\n");
+            DPRINT1("NtOpenThreadTokenEx(): Failed to impersonate the client (Status 0x%lx)\n", Status);
         }
     }
 
