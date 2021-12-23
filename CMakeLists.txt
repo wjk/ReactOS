@@ -96,7 +96,7 @@ endif()
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
-if(MSVC_IDE)
+if(MSVC)
     # Bison needs M4 and BISON_PKGDATADIR set at build time,
     # but visual studio is hardly ever opened from the configure-time environment.
     # Since cmake does not support setting env variables for a custom command,
