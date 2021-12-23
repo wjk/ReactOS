@@ -555,7 +555,7 @@ list(APPEND KERNEL_MODULE_TYPES kernel kerneldll kernelmodedriver wdmdriver)
 list(APPEND NATIVE_MODULE_TYPES kernel kerneldll kernelmodedriver wdmdriver nativecui nativedll)
 
 function(set_module_type MODULE TYPE)
-    cmake_parse_arguments(__module "UNICODE" "IMAGEBASE" "ENTRYPOINT" ${ARGN})
+    cmake_parse_arguments(__module "UNICODE" "IMAGEBASE;TARGET_VERSION;TARGET_IE_VERSION" "ENTRYPOINT" ${ARGN})
 
     if(__module_UNPARSED_ARGUMENTS)
         message(STATUS "set_module_type : unparsed arguments ${__module_UNPARSED_ARGUMENTS}, module : ${MODULE}")
@@ -635,6 +635,21 @@ function(set_module_type MODULE TYPE)
             set_image_base(${MODULE} 0x00010000)
         endif()
     endif()
+
+    # Set compatibility version
+    if(NOT __module_TARGET_VERSION)
+        set(__module_TARGET_VERSION ${TARGET_WINVER})
+    endif()
+    target_compile_definitions(${MODULE} PRIVATE -DWINVER=${__module_TARGET_VERSION}
+            -D_WIN32_WINNT=${__module_TARGET_VERSION}
+            -D_WIN32_WINDOWS=${__module_TARGET_VERSION}
+            -D_SETUPAPI_VER=0x502
+            -DMINGW_HAS_SECURE_API=1)
+
+    if(NOT __module_TARGET_IE_VERSION)
+        set(__module_TARGET_IE_VERSION ${TARGET_WINVER_IE})
+    endif()
+    target_compile_definitions(${MODULE} PRIVATE -D_WIN32_IE=${__module_TARGET_IE_VERSION})
 
     # Now do some stuff which is specific to each type
     if(TYPE IN_LIST KERNEL_MODULE_TYPES)
