@@ -1,31 +1,14 @@
 /*
  * PROJECT:     PAINT for ReactOS
  * LICENSE:     LGPL
- * FILE:        base/applications/mspaint/definitions.h
- * PURPOSE:     Defines the resource ids and other stuff
+ * FILE:        base/applications/mspaint/resource.h
+ * PURPOSE:     Defines the resource IDs
  * PROGRAMMERS: Benedikt Freisen
  */
 
 #pragma once
 
 /* DEFINES **********************************************************/
-
-#define HISTORYSIZE 11
-/* HISTORYSIZE = number of possible undo-steps + 1 */
-
-#define SIZEOF(a)  (sizeof(a) / sizeof((a)[0]))
-/* sizeof for string constants; equals max. number of characters */
-
-#define RECT_WIDTH(a)  ((a).right - (a).left)
-/* width of the rectangle defined by a RECT structure */
-
-#define RECT_HEIGHT(a)  ((a).bottom - (a).top)
-/* height of the rectangle defined by a RECT structure */
-
-#define CHECKED_IF(a) ((a) ? (MF_CHECKED | MF_BYCOMMAND) : (MF_UNCHECKED | MF_BYCOMMAND))
-/* simplifies checking and unchecking menu items */
-#define ENABLED_IF(a) ((a) ? (MF_ENABLED | MF_BYCOMMAND) : (MF_GRAYED | MF_BYCOMMAND))
-/* simplifies enabling or graying menu items */
 
 #define IDI_APPICON 500
 
@@ -131,24 +114,6 @@
 #define ID_ELLIPSE  614
 #define ID_RRECT    615
 
-/* the following 16 numbers need to be in order, increasing by 1 */
-#define TOOL_FREESEL  1
-#define TOOL_RECTSEL  2
-#define TOOL_RUBBER   3
-#define TOOL_FILL     4
-#define TOOL_COLOR    5
-#define TOOL_ZOOM     6
-#define TOOL_PEN      7
-#define TOOL_BRUSH    8
-#define TOOL_AIRBRUSH 9
-#define TOOL_TEXT     10
-#define TOOL_LINE     11
-#define TOOL_BEZIER   12
-#define TOOL_RECT     13
-#define TOOL_SHAPE    14
-#define TOOL_ELLIPSE  15
-#define TOOL_RRECT    16
-
 #define ID_ACCELERATORS 800
 
 #define IDD_MIRRORROTATE      700
@@ -237,12 +202,3 @@
 
 #define IDS_LOADERRORTEXT 933
 #define IDS_ENLARGEPROMPTTEXT 934
-
-#define WM_TOOLSMODELTOOLCHANGED WM_APP
-#define WM_TOOLSMODELSETTINGSCHANGED (WM_APP + 1)
-#define WM_TOOLSMODELZOOMCHANGED (WM_APP + 2)
-#define WM_PALETTEMODELCOLORCHANGED (WM_APP + 3)
-#define WM_PALETTEMODELPALETTECHANGED (WM_APP + 4)
-#define WM_IMAGEMODELDIMENSIONSCHANGED (WM_APP + 5)
-#define WM_IMAGEMODELIMAGECHANGED (WM_APP + 6)
-#define WM_SELECTIONMODELREFRESHNEEDED (WM_APP + 7)
