@@ -644,10 +644,17 @@ IntEngSetPointerShape(
     if (ulResult == SPS_ACCEPT_NOEXCLUDE)
     {
         /* Set MovePointer to the driver function */
-        ppdev->pfnMovePointer = GDIDEVFUNCS(pso).MovePointer;
+        ppdev->flFlags |= PDEV_HARDWARE_POINTER;
     }
     else
     {
+        if (ppdev->flFlags & PDEV_HARDWARE_POINTER)
+        {
+            /* We need to disable hardware pointer */
+            ppdev->flFlags &= ~PDEV_HARDWARE_POINTER;
+            ppdev->pfnMovePointer(pso, -1, -1, NULL);
+        }
+
         /* Set software pointer */
         ulResult = EngSetPointerShape(pso,
                                       psoMask,
@@ -659,8 +666,6 @@ IntEngSetPointerShape(
                                       y,
                                       prcl,
                                       fl);
-        /* Set MovePointer to the eng function */
-        ppdev->pfnMovePointer = EngMovePointer;
     }
 
     return ulResult;
@@ -787,11 +792,22 @@ GreMovePointer(
     /* Check if we need to move it */
     if(pdc->ppdev->SafetyRemoveLevel == 0)
     {
+        SURFOBJ* pso = &pdc->ppdev->pSurface->SurfObj;
+        PFN_DrvMovePointer pfnMovePointer;
+
         /* Store the cursor exclude position in the PDEV */
         prcl = &pdc->ppdev->Pointer.Exclude;
 
         /* Call Eng/Drv function */
-        pdc->ppdev->pfnMovePointer(&pdc->ppdev->pSurface->SurfObj, x, y, prcl);
+        if (pdc->ppdev->flFlags & PDEV_HARDWARE_POINTER)
+            pfnMovePointer = pdc->ppdev->pfnMovePointer;
+        else
+            pfnMovePointer = EngMovePointer;
+        pfnMovePointer(pso, x, y, prcl);
+
+        /* If panning device, and we're not hiding the cursor, call panning driver */
+        if (pdc->ppdev->devinfo.flGraphicsCaps & GCAPS_PANNING && y != -1)
+            pdc->ppdev->pfnMovePointer(pso, x, y - pso->sizlBitmap.cy, NULL);
     }
 
     /* Release PDEV lock */
