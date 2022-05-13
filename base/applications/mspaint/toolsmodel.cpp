@@ -17,11 +17,27 @@ ToolsModel::ToolsModel()
     m_lineWidth = 1;
     m_shapeStyle = 0;
     m_brushStyle = 0;
-    m_activeTool = TOOL_PEN;
+    m_oldActiveTool = m_activeTool = TOOL_PEN;
     m_airBrushWidth = 5;
     m_rubberRadius = 4;
     m_transpBg = FALSE;
     m_zoom = 1000;
+    ZeroMemory(&m_tools, sizeof(m_tools));
+    m_pToolObject = GetOrCreateTool(m_activeTool);
+}
+
+ToolsModel::~ToolsModel()
+{
+    for (size_t i = 0; i < TOOL_MAX + 1; ++i)
+        delete m_tools[i];
+}
+
+ToolBase *ToolsModel::GetOrCreateTool(TOOLTYPE nTool)
+{
+    if (!m_tools[nTool])
+        m_tools[nTool] = ToolBase::createToolObject(nTool);
+
+    return m_tools[nTool];
 }
 
 int ToolsModel::GetLineWidth() const
@@ -62,9 +78,35 @@ TOOLTYPE ToolsModel::GetActiveTool() const
     return m_activeTool;
 }
 
+TOOLTYPE ToolsModel::GetOldActiveTool() const
+{
+    return m_oldActiveTool;
+}
+
 void ToolsModel::SetActiveTool(TOOLTYPE nActiveTool)
 {
+    OnFinishDraw();
+
+    if (m_activeTool == nActiveTool)
+        return;
+
+    switch (m_activeTool)
+    {
+        case TOOL_FREESEL:
+        case TOOL_RECTSEL:
+        case TOOL_RUBBER:
+        case TOOL_COLOR:
+        case TOOL_ZOOM:
+        case TOOL_TEXT:
+            break;
+
+        default:
+            m_oldActiveTool = m_activeTool;
+            break;
+    }
+
     m_activeTool = nActiveTool;
+    m_pToolObject = GetOrCreateTool(m_activeTool);
     NotifyToolChanged();
 }
 
@@ -99,6 +141,8 @@ void ToolsModel::SetBackgroundTransparent(BOOL bTransparent)
 {
     m_transpBg = bTransparent;
     NotifyToolSettingsChanged();
+    if (selectionWindow.IsWindow())
+        selectionWindow.ForceRefreshSelectionContents();
 }
 
 int ToolsModel::GetZoom() const
@@ -114,18 +158,85 @@ void ToolsModel::SetZoom(int nZoom)
 
 void ToolsModel::NotifyToolChanged()
 {
-    toolBoxContainer.SendMessage(WM_TOOLSMODELTOOLCHANGED, m_activeTool);
-    toolSettingsWindow.SendMessage(WM_TOOLSMODELTOOLCHANGED, m_activeTool);
-    textEditWindow.SendMessage(WM_TOOLSMODELTOOLCHANGED, m_activeTool);
+    if (toolBoxContainer.IsWindow())
+        toolBoxContainer.SendMessage(WM_TOOLSMODELTOOLCHANGED, m_activeTool);
+    if (toolSettingsWindow.IsWindow())
+        toolSettingsWindow.SendMessage(WM_TOOLSMODELTOOLCHANGED, m_activeTool);
+    if (fontsDialog.IsWindow())
+        fontsDialog.SendMessage(WM_TOOLSMODELTOOLCHANGED, m_activeTool);
+    if (textEditWindow.IsWindow())
+        textEditWindow.SendMessage(WM_TOOLSMODELTOOLCHANGED, m_activeTool);
 }
 
 void ToolsModel::NotifyToolSettingsChanged()
 {
-    toolSettingsWindow.SendMessage(WM_TOOLSMODELSETTINGSCHANGED);
-    selectionWindow.SendMessage(WM_TOOLSMODELSETTINGSCHANGED);
+    if (toolSettingsWindow.IsWindow())
+        toolSettingsWindow.SendMessage(WM_TOOLSMODELSETTINGSCHANGED);
+    if (selectionWindow.IsWindow())
+        selectionWindow.SendMessage(WM_TOOLSMODELSETTINGSCHANGED);
+    if (textEditWindow.IsWindow())
+        textEditWindow.SendMessage(WM_TOOLSMODELSETTINGSCHANGED);
 }
 
 void ToolsModel::NotifyZoomChanged()
 {
-    toolSettingsWindow.SendMessage(WM_TOOLSMODELZOOMCHANGED);
+    if (toolSettingsWindow.IsWindow())
+        toolSettingsWindow.SendMessage(WM_TOOLSMODELZOOMCHANGED);
+    if (textEditWindow.IsWindow())
+        textEditWindow.SendMessage(WM_TOOLSMODELZOOMCHANGED);
+    if (selectionWindow.IsWindow())
+        selectionWindow.SendMessage(WM_TOOLSMODELZOOMCHANGED);
+}
+
+void ToolsModel::OnButtonDown(BOOL bLeftButton, LONG x, LONG y, BOOL bDoubleClick)
+{
+    m_pToolObject->beginEvent();
+    updateStartAndLast(x, y);
+    m_pToolObject->OnButtonDown(bLeftButton, x, y, bDoubleClick);
+    m_pToolObject->endEvent();
+}
+
+void ToolsModel::OnMouseMove(BOOL bLeftButton, LONG x, LONG y)
+{
+    m_pToolObject->beginEvent();
+    m_pToolObject->OnMouseMove(bLeftButton, x, y);
+    updateLast(x, y);
+    m_pToolObject->endEvent();
+}
+
+void ToolsModel::OnButtonUp(BOOL bLeftButton, LONG x, LONG y)
+{
+    m_pToolObject->beginEvent();
+    m_pToolObject->OnButtonUp(bLeftButton, x, y);
+    updateLast(x, y);
+    m_pToolObject->endEvent();
+}
+
+void ToolsModel::OnCancelDraw()
+{
+    ATLTRACE("ToolsModel::OnCancelDraw()\n");
+    m_pToolObject->beginEvent();
+    m_pToolObject->OnCancelDraw();
+    m_pToolObject->endEvent();
+}
+
+void ToolsModel::OnFinishDraw()
+{
+    ATLTRACE("ToolsModel::OnFinishDraw()\n");
+    m_pToolObject->beginEvent();
+    m_pToolObject->OnFinishDraw();
+    m_pToolObject->endEvent();
+}
+
+void ToolsModel::resetTool()
+{
+    m_pToolObject->reset();
+}
+
+void ToolsModel::selectAll()
+{
+    SetActiveTool(TOOL_RECTSEL);
+    OnButtonDown(TRUE, 0, 0, FALSE);
+    OnMouseMove(TRUE, imageModel.GetWidth(), imageModel.GetHeight());
+    OnButtonUp(TRUE, imageModel.GetWidth(), imageModel.GetHeight());
 }

@@ -50,10 +50,11 @@ public:
     void DrawSelection(HDC hDCImage, COLORREF crBg = 0, BOOL bBgTransparent = FALSE);
     void DrawSelectionStretched(HDC hDCImage);
     void ScaleContentsToFit();
-    void InsertFromHBITMAP(HBITMAP hBm);
+    void InsertFromHBITMAP(HBITMAP hBm, INT x = 0, INT y = 0);
     void FlipHorizontally();
     void FlipVertically();
     void RotateNTimes90Degrees(int iN);
+    void StretchSkew(int nStretchPercentX, int nStretchPercentY, int nSkewDegX = 0, int nSkewDegY = 0);
     HBITMAP GetBitmap() const;
     int PtStackSize() const;
     void DrawFramePoly(HDC hDCImage);
@@ -65,7 +66,7 @@ public:
     LONG GetDestRectHeight() const;
     LONG GetDestRectLeft() const;
     LONG GetDestRectTop() const;
-    void DrawTextToolText(HDC hDCImage, COLORREF crFg, COLORREF crBg, BOOL bBgTransparent = FALSE);
+    void GetRect(LPRECT prc) const;
 
 private:
     SelectionModel(const SelectionModel&);

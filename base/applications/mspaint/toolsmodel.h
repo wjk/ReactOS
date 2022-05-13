@@ -26,9 +26,48 @@ enum TOOLTYPE
     TOOL_SHAPE    = 14,
     TOOL_ELLIPSE  = 15,
     TOOL_RRECT    = 16,
+    TOOL_MAX = TOOL_RRECT,
 };
 
 /* CLASSES **********************************************************/
+
+struct ToolBase
+{
+    TOOLTYPE m_tool;
+    HDC m_hdc;
+    COLORREF m_fg, m_bg;
+    static INT pointSP;
+    static POINT pointStack[256];
+
+    ToolBase(TOOLTYPE tool) : m_tool(tool), m_hdc(NULL)
+    {
+    }
+
+    virtual ~ToolBase()
+    {
+    }
+
+    virtual void OnButtonDown(BOOL bLeftButton, LONG x, LONG y, BOOL bDoubleClick)
+    {
+    }
+
+    virtual void OnMouseMove(BOOL bLeftButton, LONG x, LONG y)
+    {
+    }
+
+    virtual void OnButtonUp(BOOL bLeftButton, LONG x, LONG y)
+    {
+    }
+
+    virtual void OnCancelDraw();
+    virtual void OnFinishDraw();
+
+    void beginEvent();
+    void endEvent();
+    void reset();
+
+    static ToolBase* createToolObject(TOOLTYPE type);
+};
 
 class ToolsModel
 {
@@ -37,17 +76,19 @@ private:
     int m_shapeStyle;
     int m_brushStyle;
     TOOLTYPE m_activeTool;
+    TOOLTYPE m_oldActiveTool;
     int m_airBrushWidth;
     int m_rubberRadius;
     BOOL m_transpBg;
     int m_zoom;
+    ToolBase* m_tools[TOOL_MAX + 1];
+    ToolBase *m_pToolObject;
 
-    void NotifyToolChanged();
-    void NotifyToolSettingsChanged();
-    void NotifyZoomChanged();
+    ToolBase *GetOrCreateTool(TOOLTYPE nTool);
 
 public:
     ToolsModel();
+    ~ToolsModel();
     int GetLineWidth() const;
     void SetLineWidth(int nLineWidth);
     int GetShapeStyle() const;
@@ -55,6 +96,7 @@ public:
     int GetBrushStyle() const;
     void SetBrushStyle(int nBrushStyle);
     TOOLTYPE GetActiveTool() const;
+    TOOLTYPE GetOldActiveTool() const;
     void SetActiveTool(TOOLTYPE nActiveTool);
     int GetAirBrushWidth() const;
     void SetAirBrushWidth(int nAirBrushWidth);
@@ -64,4 +106,17 @@ public:
     void SetBackgroundTransparent(BOOL bTransparent);
     int GetZoom() const;
     void SetZoom(int nZoom);
+
+    void OnButtonDown(BOOL bLeftButton, LONG x, LONG y, BOOL bDoubleClick);
+    void OnMouseMove(BOOL bLeftButton, LONG x, LONG y);
+    void OnButtonUp(BOOL bLeftButton, LONG x, LONG y);
+    void OnCancelDraw();
+    void OnFinishDraw();
+
+    void resetTool();
+    void selectAll();
+
+    void NotifyToolChanged();
+    void NotifyToolSettingsChanged();
+    void NotifyZoomChanged();
 };

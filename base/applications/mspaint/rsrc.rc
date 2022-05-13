@@ -10,6 +10,7 @@
 
 #include <windef.h>
 #include <winuser.h>
+#include <commctrl.h>
 
 #include "resource.h"
 
@@ -127,6 +128,9 @@ IDI_VERTSKEW ICON "icons/vertskew.ico"
 #endif
 #ifdef LANGUAGE_ZH_CN
     #include "lang/zh-CN.rc"
+#endif
+#ifdef LANGUAGE_ZH_HK
+    #include "lang/zh-HK.rc"
 #endif
 #ifdef LANGUAGE_ZH_TW
     #include "lang/zh-TW.rc"

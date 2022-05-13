@@ -257,6 +257,32 @@ cleanup:
 }
 
 BOOL WINAPI
+GetDeletedFileTypeNameW(
+    IN HANDLE hDeletedFile,
+    OUT LPWSTR pTypeName,
+    IN DWORD BufferSize,
+    OUT LPDWORD RequiredSize OPTIONAL)
+{
+    IRecycleBinFile *prbf = (IRecycleBinFile *)hDeletedFile;
+    SIZE_T FinalSize;
+
+    HRESULT hr = IRecycleBinFile_GetTypeName(prbf, BufferSize, pTypeName, &FinalSize);
+
+    if (SUCCEEDED(hr))
+    {
+        if (RequiredSize)
+            *RequiredSize = (DWORD)FinalSize;
+
+        return TRUE;
+    }
+    if (HRESULT_FACILITY(hr) == FACILITY_WIN32)
+        SetLastError(HRESULT_CODE(hr));
+    else
+        SetLastError(ERROR_GEN_FAILURE);
+    return FALSE;
+}
+
+BOOL WINAPI
 GetDeletedFileDetailsA(
     IN HANDLE hDeletedFile,
     IN DWORD BufferSize,
