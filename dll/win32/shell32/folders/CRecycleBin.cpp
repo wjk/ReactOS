@@ -1115,13 +1115,10 @@ TRASH_DirectoryIsFull(LPCWSTR pszDirectory)
     return isFull;
 }
 
-BOOL
+static
+HRESULT
 TRASH_IsTrashEmpty(LPCWSTR pszRoot OPTIONAL)
 {
-    // API contract:
-    // If GetLastError() != NO_ERROR upon return, the call failed and the return value is meaningless.
-    // Otherwise, the return value indicates whether the trash is empty or not.
-
     HRESULT hr;
 
     CComPtr<IRecycleBin> prb;
@@ -1129,36 +1126,22 @@ TRASH_IsTrashEmpty(LPCWSTR pszRoot OPTIONAL)
     CComPtr<IRecycleBinFile> prbf;
 
     hr = GetDefaultRecycleBin(pszRoot, &prb);
-    if (FAILED(hr))
-    {
-        SetLastError(HRESULT_CODE(hr));
-        return FALSE;
-    }
+    if (FAILED(hr)) return hr;
 
     hr = prb->EnumObjects(&prbel);
-    if (FAILED(hr))
-    {
-        SetLastError(HRESULT_CODE(hr));
-        return FALSE;
-    }
+    if (FAILED(hr)) return hr;
 
     hr = prbel->Next(1, &prbf, NULL);
-    if (FAILED(hr))
-    {
-        SetLastError(HRESULT_CODE(hr));
-        return FALSE;
-    }
+    if (FAILED(hr)) return hr;
 
     if (hr == S_FALSE)
     {
         // If we get here, the recycle bin is not empty. Don't bother looking any further.
-        SetLastError(NO_ERROR);
-        return FALSE;
+        return S_FALSE;
     }
 
     // The recycle bin is empty only if we get here.
-    SetLastError(NO_ERROR);
-    return TRUE;
+    return S_OK;
 }
 
 /*************************************************************************
