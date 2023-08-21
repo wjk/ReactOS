@@ -20,6 +20,8 @@
  *
  */
 
+/* This file (and this file only) is sync'ed to Wine 8.14. */
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
