@@ -67,6 +67,10 @@
 #define IDS_BUTTON_CANCEL 3004
 #define IDS_BUTTON_CLOSE  3005
 
+/* Task dialog expando control default text */
+#define IDS_TD_EXPANDED   3020
+#define IDS_TD_COLLAPSED  3021
+
 // This is really ComCtl32 v5.82, the last one not supporting SxS
 #undef  COMCTL32_VERSION // Undefines what the PSDK gave to us
 #define COMCTL32_VERSION        5
