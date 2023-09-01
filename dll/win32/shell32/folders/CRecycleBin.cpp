@@ -1070,7 +1070,7 @@ static void TRASH_PlayEmptyRecycleBinSound()
 }
 
 /*************************************************************************
- * SHUpdateCRecycleBinIcon                                [SHELL32.@]
+ * SHUpdateRecycleBinIcon                                 [SHELL32.@]
  *
  * Undocumented
  */
