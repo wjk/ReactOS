@@ -1076,8 +1076,82 @@ static void TRASH_PlayEmptyRecycleBinSound()
  */
 EXTERN_C HRESULT WINAPI SHUpdateRecycleBinIcon(void)
 {
-    FIXME("stub\n");
+    BOOL recycleBinEmpty = true;
 
+    /* First, check to see if the Recycle Bin on any drive has anything in it.*/
+
+    // I do not want to use CString here because this API returns a LPWZZSTR.
+    CHeapPtr<WCHAR> logicalDrivesBuffer;
+    DWORD logicalDrivesBufferLength;
+    logicalDrivesBufferLength = GetLogicalDriveStringsW(0, NULL);
+    logicalDrivesBuffer.Allocate(logicalDrivesBufferLength / sizeof(WCHAR));
+    GetLogicalDriveStringsW(logicalDrivesBufferLength, (LPWSTR)&logicalDrivesBuffer);
+
+    /* For every drive in the system: */
+    LPWSTR logicalDrivesPtr = (LPWSTR)logicalDrivesBuffer.m_pData;
+    while (*logicalDrivesPtr != L'\0')
+    {
+        LPWSTR logicalDrive = logicalDrivesPtr;
+        logicalDrivesPtr += strlenW(logicalDrive) + 1; // count the trailing NUL
+
+        /* Get its recycle bin... */
+        CComPtr<IRecycleBin> recycleBin;
+        HRESULT hr = GetDefaultRecycleBin(logicalDrive, &recycleBin);
+        if (FAILED(hr)) continue;
+
+        /* ...and check if there is anything in it. */
+        CComPtr<IRecycleBinEnumList> recycleBinEnum;
+        hr = recycleBin->EnumObjects(&recycleBinEnum);
+
+        // If the rgelt parameter is NULL, then IRecycleBinEnum::Next() will return an error.
+        CComPtr<IRecycleBinFile> dontCare;
+        hr = recycleBinEnum->Next(1, &dontCare, NULL);
+        if (FAILED(hr)) continue;
+
+        if (hr == S_FALSE)
+        {
+            // The recycle bin is empty. Continue.
+        }
+        else
+        {
+            // There is at least one item in the recycle bin for this drive.
+            // Since we know that the recycle bin is not empty, we can stop now.
+            recycleBinEmpty = false;
+            break;
+        }
+    }
+
+    /* Now that we know if the Recycle Bin is empty or not, set the icon in the Registry. */
+
+    CRegKey key;
+    LONG lres = key.Open(HKEY_CURRENT_USER, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\CLSID\\{645FF040-5081-101B-9F08-00AA002F954E}\\DefaultIcon"), KEY_READ);
+    if (lres != STATUS_SUCCESS) return HRESULT_FROM_WIN32(lres);
+
+    LPCWSTR valueName = recycleBinEmpty ? L"empty" : L"full";
+    CStringW iconName;
+    DWORD charCount;
+
+    lres = key.QueryStringValue(valueName, NULL, &charCount);
+    if (lres != STATUS_SUCCESS && lres != ERROR_MORE_DATA) return HRESULT_FROM_WIN32(lres);
+
+    LPWSTR buffer = iconName.GetBuffer(charCount);
+    lres = key.QueryStringValue(valueName, buffer, &charCount);
+    iconName.ReleaseBuffer();
+    if (lres != STATUS_SUCCESS) return HRESULT_FROM_WIN32(lres);
+
+    WCHAR expandedPath[MAX_PATH];
+    SHExpandEnvironmentStringsW(iconName.GetString(), expandedPath, MAX_PATH);
+    lres = key.SetStringValue(L"", expandedPath, REG_SZ);
+    if (lres != STATUS_SUCCESS) return HRESULT_FROM_WIN32(lres);
+
+    /* Finally, update the image and notify the shell of the update */
+
+    // FIXME: SHUpdateImage() not called here because it is a stub
+    LPITEMIDLIST pidl = _ILCreateBitBucket();
+    SHChangeNotify(0, SHCNF_IDLIST, pidl, NULL);
+    ILFree(pidl);
+
+    /* And we're done! */
     return S_OK;
 }
 
