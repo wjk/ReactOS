@@ -198,7 +198,7 @@ BEGIN
     LTEXT "Б&ыстрый вызов:", IDC_SHORTCUT_KEY, 8, 117, 68, 10
     CONTROL "", IDC_SHORTCUT_KEY_HOTKEY, "msctls_hotkey32", WS_VISIBLE | WS_CHILD | WS_BORDER | WS_TABSTOP, 79, 115, 150, 14
     LTEXT "Ок&но:", IDC_SHORTCUT_RUN, 8, 136, 68, 10
-    COMBOBOX IDC_SHORTCUT_RUN_COMBO, 79, 134, 150, 14, CBS_DROPDOWNLIST | WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX IDC_SHORTCUT_RUN_COMBO, 79, 134, 150, 54, CBS_DROPDOWNLIST | WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP
     LTEXT "&Комментарий:", IDC_SHORTCUT_COMMENT, 8, 154, 68, 10
     EDITTEXT IDC_SHORTCUT_COMMENT_EDIT, 79, 152, 150, 14, ES_AUTOHSCROLL
     PUSHBUTTON "&Найти объект...", IDC_SHORTCUT_FIND, 9, 172, 70, 14, ES_LEFT
@@ -815,8 +815,8 @@ BEGIN
     IDS_MOVEERROR "Не удаётся переместить '%s': %s"
     IDS_COPYERROR "Не удаётся скопировать '%s': %s"
 
-    IDS_CREATEFILE_DENIED "Could not create file %1"
-    IDS_CREATEFILE_CAPTION "Error creating file"
+    IDS_CREATEFILE_DENIED "Невозможно создать файл '%1'"
+    IDS_CREATEFILE_CAPTION "Невозможно создать файл"
     IDS_CREATEFOLDER_DENIED "Невозможно создать папку '%1'"
     IDS_CREATEFOLDER_CAPTION "Невозможно создать папку"
     IDS_DELETEITEM_CAPTION "Подтверждение удаления файла"
@@ -859,6 +859,11 @@ BEGIN
     IDS_RUNDLG_BROWSE_ERROR "Невозможно отобразить диалоговое окно Обзор (внутренняя ошибка)"
     IDS_RUNDLG_BROWSE_CAPTION "Обзор"
     IDS_RUNDLG_BROWSE_FILTER "Исполняемые файлы (*.exe)\0*.exe\0Все файлы (*.*)\0*.*\0"
+
+    /* Shortcut property sheet */
+    IDS_SHORTCUT_RUN_NORMAL "Обычный размер окна"
+    IDS_SHORTCUT_RUN_MIN "Свёрнутое в значок"
+    IDS_SHORTCUT_RUN_MAX "Развёрнутое на весь экран"
 
     /* Shell folder path default values. See also: dll/win32/userenv/lang */
     IDS_PROGRAMS "Главное меню\\Программы"

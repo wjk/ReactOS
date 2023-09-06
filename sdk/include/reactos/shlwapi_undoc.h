@@ -69,6 +69,19 @@ HRESULT WINAPI SHWriteDataBlockList(IStream* lpStream, LPDBLIST lpList);
 HRESULT WINAPI SHReadDataBlockList(IStream* lpStream, LPDBLIST* lppList);
 VOID WINAPI SHFreeDataBlockList(LPDBLIST lpList);
 
+LONG
+WINAPI
+RegCreateKeyExWrapW(
+    _In_ HKEY hKey,
+    _In_ LPCWSTR lpSubKey,
+    _In_ DWORD Reserved,
+    _In_opt_ LPWSTR lpClass,
+    _In_ DWORD dwOptions,
+    _In_ REGSAM samDesired,
+    _In_opt_ LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+    _Out_ PHKEY phkResult,
+    _Out_opt_ LPDWORD lpdwDisposition);
+
 /* Redirected to kernel32.ExpandEnvironmentStringsA/W */
 DWORD WINAPI SHExpandEnvironmentStringsA(LPCSTR,LPSTR,DWORD);
 DWORD WINAPI SHExpandEnvironmentStringsW(LPCWSTR,LPWSTR,DWORD);
@@ -108,9 +121,11 @@ HRESULT WINAPI SHPropertyBag_ReadRECTL(IPropertyBag *ppb, LPCWSTR pszPropName, R
 HRESULT WINAPI SHPropertyBag_ReadGUID(IPropertyBag *ppb, LPCWSTR pszPropName, GUID *pguid);
 HRESULT WINAPI SHPropertyBag_ReadStream(IPropertyBag *ppb, LPCWSTR pszPropName, IStream **ppStream);
 
-HRESULT WINAPI SHGetPerScreenResName(OUT LPWSTR lpResName,
-                                     IN INT cchResName,
-                                     IN DWORD dwReserved);
+INT WINAPI
+SHGetPerScreenResName(
+    _Out_writes_(cchBuffer) LPWSTR pszBuffer,
+    _In_ INT cchBuffer,
+    _In_ DWORD dwReserved);
 
 HRESULT WINAPI SHPropertyBag_Delete(IPropertyBag *ppb, LPCWSTR pszPropName);
 HRESULT WINAPI SHPropertyBag_WriteBOOL(IPropertyBag *ppb, LPCWSTR pszPropName, BOOL bValue);
@@ -217,6 +232,25 @@ SHSetIniStringUTF7W(
     _In_opt_z_ LPCWSTR lpString,
     _In_z_ LPCWSTR lpFileName);
 
+enum _shellkey_flags
+{
+    SHKEY_Root_HKCU = 0x1,
+    SHKEY_Root_HKLM = 0x2,
+    SHKEY_Key_Explorer = 0x00,
+    SHKEY_Key_Shell = 0x10,
+    SHKEY_Key_ShellNoRoam = 0x20,
+    SHKEY_Key_Classes = 0x30,
+    SHKEY_Subkey_Default = 0x0000,
+    SHKEY_Subkey_ResourceName = 0x1000,
+    SHKEY_Subkey_Handlers = 0x2000,
+    SHKEY_Subkey_Associations = 0x3000,
+    SHKEY_Subkey_Volatile = 0x4000,
+    SHKEY_Subkey_MUICache = 0x5000,
+    SHKEY_Subkey_FileExts = 0x6000
+};
+
+HKEY WINAPI SHGetShellKey(DWORD flags, LPCWSTR sub_key, BOOL create);
+
 int
 WINAPIV
 ShellMessageBoxWrapW(
@@ -242,6 +276,7 @@ BOOL WINAPI PathFileExistsDefExtW(LPWSTR lpszPath, DWORD dwWhich);
 BOOL WINAPI PathFindOnPathExW(LPWSTR lpszFile, LPCWSTR *lppszOtherDirs, DWORD dwWhich);
 VOID WINAPI FixSlashesAndColonW(LPWSTR);
 BOOL WINAPI PathIsValidCharW(WCHAR c, DWORD dwClass);
+BOOL WINAPI SHGetPathFromIDListWrapW(LPCITEMIDLIST pidl, LPWSTR pszPath);
 
 #ifdef __cplusplus
 } /* extern "C" */
