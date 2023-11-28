@@ -17,17 +17,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 /*
  * Unimplemented
  */
-EXTERN_C LPWSTR
-WINAPI
-ShortSizeFormatW(LONGLONG llNumber)
-{
-    FIXME("ShortSizeFormatW() stub\n");
-    return NULL;
-}
-
-/*
- * Unimplemented
- */
 EXTERN_C BOOL
 WINAPI
 PathIsEqualOrSubFolder(LPWSTR lpFolder, LPWSTR lpSubFolder)
@@ -95,17 +84,6 @@ WINAPI
 SHReValidateDarwinCache(VOID)
 {
     FIXME("SHReValidateDarwinCache() stub\n");
-}
-
-/*
- * Unimplemented
- */
-EXTERN_C HRESULT
-WINAPI
-CopyStreamUI(IStream *pSrc, IStream *pDst, IProgressDialog *pProgDlg)
-{
-    FIXME("CopyStreamUI() stub\n");
-    return E_FAIL;
 }
 
 /*
@@ -218,35 +196,20 @@ SHGetSetFolderCustomSettingsA(LPSHFOLDERCUSTOMSETTINGSA pfcs,
     return E_FAIL;
 }
 
-/*
- * Unimplemented
+/*************************************************************************
+ *  SHOpenPropSheetW [SHELL32.80]
+ *
+ * @see https://learn.microsoft.com/en-us/windows/win32/api/shlobj/nf-shlobj-shopenpropsheetw
  */
-EXTERN_C BOOL
-WINAPI
-SHOpenPropSheetA(LPCSTR lpCaption,
-                 HKEY hKeys[],
-                 UINT uCount,
-                 const CLSID *pClsID,
-                 IDataObject *pDataObject,
-                 IShellBrowser *pShellBrowser,
-                 LPCSTR lpStartPage)
-{
-    FIXME("SHOpenPropSheetA() stub\n");
-    return FALSE;
-}
-
-/*
- * Unimplemented
- */
-EXTERN_C BOOL
-WINAPI
-SHOpenPropSheetW(LPCWSTR lpCaption,
-                 HKEY hKeys[],
-                 UINT uCount,
-                 const CLSID *pClsID,
-                 IDataObject *pDataObject,
-                 IShellBrowser *pShellBrowser,
-                 LPCWSTR lpStartPage)
+BOOL WINAPI
+SHOpenPropSheetW(
+    _In_opt_ LPCWSTR pszCaption,
+    _In_opt_ HKEY *ahKeys,
+    _In_ UINT cKeys,
+    _In_ const CLSID *pclsidDefault,
+    _In_ IDataObject *pDataObject,
+    _In_opt_ IShellBrowser *pShellBrowser,
+    _In_opt_ LPCWSTR pszStartPage)
 {
     FIXME("SHOpenPropSheetW() stub\n");
     return FALSE;
@@ -738,22 +701,10 @@ PifMgr_SetProperties(HANDLE hHandle, LPCSTR lpName, LPCVOID lpUnknown, INT iUnkn
  */
 EXTERN_C HRESULT
 WINAPI
-SHStartNetConnectionDialogA(HWND hwnd,
-                            LPCSTR pszRemoteName,
-                            DWORD dwType)
-{
-    FIXME("SHStartNetConnectionDialogA() stub\n");
-    return E_FAIL;
-}
-
-/*
- * Unimplemented
- */
-EXTERN_C HRESULT
-WINAPI
-SHStartNetConnectionDialogW(HWND hwnd,
-                            LPCWSTR pszRemoteName,
-                            DWORD dwType)
+SHStartNetConnectionDialogW(
+    _In_ HWND hwnd,
+    _In_ LPCWSTR pszRemoteName,
+    _In_ DWORD dwType)
 {
     FIXME("SHStartNetConnectionDialogW() stub\n");
     return E_FAIL;
@@ -780,17 +731,6 @@ DAD_DragEnterEx2(HWND hwndTarget,
                  IDataObject *pdtObject)
 {
     FIXME("DAD_DragEnterEx2() stub\n");
-    return FALSE;
-}
-
-/*
- * Unimplemented
- */
-EXTERN_C BOOL
-WINAPI
-IsSuspendAllowed(VOID)
-{
-    FIXME("IsSuspendAllowed() stub\n");
     return FALSE;
 }
 
@@ -835,17 +775,6 @@ WINAPI
 SHIsBadInterfacePtr(LPVOID pv, UINT ucb)
 {
     FIXME("SHIsBadInterfacePtr() stub\n");
-    return FALSE;
-}
-
-/*
- * Unimplemented
- */
-EXTERN_C BOOL
-WINAPI
-Activate_RunDLL(DWORD dwProcessId, LPVOID lpUnused1, LPVOID lpUnused2, LPVOID lpUnused3)
-{
-    FIXME("Activate_RunDLL() stub\n");
     return FALSE;
 }
 
@@ -952,38 +881,6 @@ Printers_GetPidl(LPCITEMIDLIST pidl, LPCWSTR lpName, DWORD dwUnknown1, DWORD dwU
 /*
  * Unimplemented
  */
-EXTERN_C INT
-WINAPI
-Int64ToString(LONGLONG llInt64,
-              LPWSTR lpOut,
-              UINT uSize,
-              BOOL bUseFormat,
-              NUMBERFMT *pNumberFormat,
-              DWORD dwNumberFlags)
-{
-    FIXME("Int64ToString() stub\n");
-    return 0;
-}
-
-/*
- * Unimplemented
- */
-EXTERN_C INT
-WINAPI
-LargeIntegerToString(LARGE_INTEGER *pLargeInt,
-                     LPWSTR lpOut,
-                     UINT uSize,
-                     BOOL bUseFormat,
-                     NUMBERFMT *pNumberFormat,
-                     DWORD dwNumberFlags)
-{
-    FIXME("LargeIntegerToString() stub\n");
-    return 0;
-}
-
-/*
- * Unimplemented
- */
 EXTERN_C LONG
 WINAPI
 Printers_AddPrinterPropPages(LPVOID lpUnknown1, LPVOID lpUnknown2)
@@ -997,26 +894,12 @@ Printers_AddPrinterPropPages(LPVOID lpUnknown1, LPVOID lpUnknown2)
  */
 EXTERN_C WORD
 WINAPI
-ExtractIconResInfoA(HANDLE hHandle,
-                    LPSTR lpFile,
-                    WORD wIndex,
-                    LPWORD lpSize,
-                    LPHANDLE lpIcon)
-{
-    FIXME("ExtractIconResInfoA() stub\n");
-    return 0;
-}
-
-/*
- * Unimplemented
- */
-EXTERN_C WORD
-WINAPI
-ExtractIconResInfoW(HANDLE hHandle,
-                    LPWSTR lpFile,
-                    WORD wIndex,
-                    LPWORD lpSize,
-                    LPHANDLE lpIcon)
+ExtractIconResInfoW(
+    _In_ HANDLE hHandle,
+    _In_ LPCWSTR lpFileName,
+    _In_ WORD wIndex,
+    _Out_ LPWORD lpSize,
+    _Out_ LPHANDLE lpIcon)
 {
     FIXME("ExtractIconResInfoW() stub\n");
     return 0;
@@ -1086,24 +969,11 @@ FirstUserLogon(LPWSTR lpUnknown1, LPWSTR lpUnknown2)
  */
 EXTERN_C HRESULT
 WINAPI
-SHSetFolderPathA(int csidl,
-                 HANDLE hToken,
-                 DWORD dwFlags,
-                 LPCSTR pszPath)
-{
-    FIXME("SHSetFolderPathA() stub\n");
-    return E_FAIL;
-}
-
-/*
- * Unimplemented
- */
-EXTERN_C HRESULT
-WINAPI
-SHSetFolderPathW(int csidl,
-                 HANDLE hToken,
-                 DWORD dwFlags,
-                 LPCWSTR pszPath)
+SHSetFolderPathW(
+    _In_ INT csidl,
+    _In_ HANDLE hToken,
+    _In_ DWORD dwFlags,
+    _In_ LPCWSTR pszPath)
 {
     FIXME("SHSetFolderPathW() stub\n");
     return E_FAIL;
@@ -1136,28 +1006,6 @@ SHSetUserPicturePathW(LPCWSTR lpPath, int csidl, LPVOID lpUnknown)
  */
 EXTERN_C BOOL
 WINAPI
-SHOpenEffectiveToken(LPVOID Token)
-{
-    FIXME("SHOpenEffectiveToken() stub\n");
-    return FALSE;
-}
-
-/*
- * Unimplemented
- */
-EXTERN_C BOOL
-WINAPI
-SHTestTokenPrivilegeW(HANDLE hToken, LPDWORD ReturnLength)
-{
-    FIXME("SHTestTokenPrivilegeW() stub\n");
-    return FALSE;
-}
-
-/*
- * Unimplemented
- */
-EXTERN_C BOOL
-WINAPI
 SHShouldShowWizards(LPVOID lpUnknown)
 {
     FIXME("SHShouldShowWizards() stub\n");
@@ -1169,20 +1017,11 @@ SHShouldShowWizards(LPVOID lpUnknown)
  */
 EXTERN_C BOOL
 WINAPI
-PathIsSlowW(LPCWSTR pszFile, DWORD dwFileAttr)
+PathIsSlowW(
+    _In_ LPCWSTR pszFile,
+    _In_ DWORD dwAttr)
 {
     FIXME("PathIsSlowW() stub\n");
-    return FALSE;
-}
-
-/*
- * Unimplemented
- */
-EXTERN_C BOOL
-WINAPI
-PathIsSlowA(LPCSTR pszFile, DWORD dwFileAttr)
-{
-    FIXME("PathIsSlowA() stub\n");
     return FALSE;
 }
 
@@ -1210,17 +1049,6 @@ SHGetProcessDword(DWORD dwUnknown1, DWORD dwUnknown2)
     return 0;
 }
 
-/*
- * Unimplemented
- */
-EXTERN_C LPVOID
-WINAPI
-SHGetUserSessionId(HANDLE hHandle)
-{
-    FIXME("SHGetUserSessionId() stub\n");
-    return NULL;
-}
-
 EXTERN_C
 DWORD WINAPI CheckStagingArea(VOID)
 {
@@ -1233,15 +1061,4 @@ DWORD WINAPI SHGetComputerDisplayNameW(DWORD param1, DWORD param2, DWORD param3,
 {
     FIXME("SHGetComputerDisplayNameW() stub\n");
     return E_FAIL;
-}
-
-/*
- * Unimplemented
- */
-EXTERN_C HINSTANCE
-WINAPI
-SHGetShellStyleHInstance(VOID)
-{
-    FIXME("SHGetShellStyleHInstance() stub\n");
-    return NULL;
 }

@@ -1366,7 +1366,7 @@ void FASTCALL MENU_InitSysMenuPopup(PMENU menu, DWORD style, DWORD clsStyle, LON
 
     gray = !(style & WS_THICKFRAME) || (style & (WS_MAXIMIZE | WS_MINIMIZE));
     IntEnableMenuItem( menu, SC_SIZE, (gray ? MF_GRAYED : MF_ENABLED) );
-    gray = ((style & WS_MAXIMIZE) != 0);
+    gray = ((style & (WS_MAXIMIZE | WS_MINIMIZE)) != 0);
     IntEnableMenuItem( menu, SC_MOVE, (gray ? MF_GRAYED : MF_ENABLED) );
     gray = !(style & WS_MINIMIZEBOX) || (style & WS_MINIMIZE);
     IntEnableMenuItem( menu, SC_MINIMIZE, (gray ? MF_GRAYED : MF_ENABLED) );
@@ -3555,7 +3555,9 @@ static BOOL FASTCALL MENU_ButtonDown(MTRACKER* pmt, PMENU PtMenu, UINT Flags)
   {
       UINT id = 0;
       PITEM item;
-      if (IS_SYSTEM_MENU(PtMenu))
+      
+      // Special check for the icon system menu
+      if (IS_SYSTEM_MENU(PtMenu) && !(PtMenu->fFlags & MNF_POPUP))
       {
          item = PtMenu->rgItems;
       }
@@ -3599,7 +3601,8 @@ static INT FASTCALL MENU_ButtonUp(MTRACKER *pmt, PMENU PtMenu, UINT Flags)
       UINT Id = 0;
       ITEM *item;
       
-      if ( IS_SYSTEM_MENU(PtMenu) )
+      // Special check for the icon system menu
+      if (IS_SYSTEM_MENU(PtMenu) && !(PtMenu->fFlags & MNF_POPUP))
       {
           item = PtMenu->rgItems;
       }
@@ -3683,20 +3686,7 @@ static BOOL FASTCALL MENU_MouseMove(MTRACKER *pmt, PMENU PtMenu, UINT Flags)
   UINT Index = NO_SELECTED_ITEM;
 
   if ( PtMenu )
-  {
-      if (IS_SYSTEM_MENU(PtMenu))
-      {
-          Index = 0;
-          //// ReactOS only HACK: CORE-2338
-          // Windows tracks mouse moves to the system menu but does not open it.
-          // Only keyboard tracking can do that.
-          //
-          TRACE("SystemMenu\n");
-          return TRUE; // Stay inside the Loop!
-      }
-      else
-          MENU_FindItemByCoords( PtMenu, pmt->Pt, &Index );
-  }
+      MENU_FindItemByCoords( PtMenu, pmt->Pt, &Index );
 
   if (Index == NO_SELECTED_ITEM)
   {

@@ -10,6 +10,7 @@ list(APPEND SOURCE
     load_notifications.c
     locale.c
     NtAcceptConnectPort.c
+    NtAccessCheck.c
     NtAccessCheckByType.c
     NtAccessCheckByTypeResultList.c
     NtAdjustGroupsToken.c
@@ -46,6 +47,7 @@ list(APPEND SOURCE
     NtQueryVolumeInformationFile.c
     NtReadFile.c
     NtSaveKey.c
+    NtSetDefaultLocale.c
     NtSetInformationFile.c
     NtSetInformationProcess.c
     NtSetInformationThread.c
@@ -59,6 +61,7 @@ list(APPEND SOURCE
     RtlBitmap.c
     RtlComputePrivatizedDllName_U.c
     RtlCopyMappedMemory.c
+    RtlCriticalSection.c
     RtlDebugInformation.c
     RtlDeleteAce.c
     RtlDetermineDosPathNameType.c
@@ -99,7 +102,8 @@ list(APPEND SOURCE
     StackOverflow.c
     SystemInfo.c
     UserModeException.c
-    Timer.c)
+    Timer.c
+    precomp.h)
 
 if(ARCH STREQUAL "i386")
     add_asm_files(ntdll_apitest_asm i386/NtContinue.S)
@@ -124,7 +128,7 @@ set_target_properties(ntdll_apitest
     ENABLE_EXPORTS TRUE
     DEFINE_SYMBOL "")
 
-target_link_libraries(ntdll_apitest wine uuid ${PSEH_LIB})
+target_link_libraries(ntdll_apitest rtl_test_lib wine uuid ${PSEH_LIB})
 set_module_type(ntdll_apitest win32cui)
 add_importlibs(ntdll_apitest msvcrt advapi32 kernel32 ntdll)
 add_pch(ntdll_apitest precomp.h "${PCH_SKIP_SOURCE}")

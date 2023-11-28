@@ -1263,7 +1263,7 @@ co_MsqSendMessage(PTHREADINFO ptirec,
                Entry = Entry->Flink;
             }
 
-            ERR("MsqSendMessage timed out 2 Status %lx\n", WaitStatus);
+            WARN("MsqSendMessage timed out 2 Status %lx\n", WaitStatus);
             break;
          }
          // Receiving thread passed on and left us hanging with issues still pending.
@@ -1535,7 +1535,7 @@ BOOL co_IntProcessMouseMessage(MSG* msg, BOOL* RemoveMessages, BOOL* NotForUs, L
     }
     else
     {
-       ERR("Not the same cursor!\n");
+       WARN("Not the same cursor!\n");
     }
 
     msg->hwnd = UserHMGetHandle(pwndMsg);
@@ -1770,7 +1770,6 @@ BOOL co_IntProcessKeyboardMessage(MSG* Msg, BOOL* RemoveMessages)
     PWND pWnd;
     UINT ImmRet;
     BOOL Ret = TRUE;
-    WPARAM wParam = Msg->wParam;
     PTHREADINFO pti = PsGetCurrentThreadWin32Thread();
 
     if (Msg->message == VK_PACKET)
@@ -1848,69 +1847,6 @@ BOOL co_IntProcessKeyboardMessage(MSG* Msg, BOOL* RemoveMessages)
                 Ret = FALSE;
                 //// Skip the rest.
                 goto Exit;
-            }
-        }
-    }
-
-    if ( *RemoveMessages && (Msg->message == WM_SYSKEYDOWN || Msg->message == WM_KEYDOWN) )
-    {
-        if (gdwLanguageToggleKey < 3)
-        {
-            if (IS_KEY_DOWN(gafAsyncKeyState, gdwLanguageToggleKey == 1 ? VK_LMENU : VK_CONTROL)) // L Alt 1 or Ctrl 2 .
-            {
-                if ( wParam == VK_LSHIFT ) gLanguageToggleKeyState = INPUTLANGCHANGE_FORWARD;  // Left Alt - Left Shift, Next
-                //// FIXME : It seems to always be VK_LSHIFT.
-                if ( wParam == VK_RSHIFT ) gLanguageToggleKeyState = INPUTLANGCHANGE_BACKWARD; // Left Alt - Right Shift, Previous
-            }
-         }
-    }
-
-    //// Key Up!                             Alt Key                        Ctrl Key
-    if ( *RemoveMessages && (Msg->message == WM_SYSKEYUP || Msg->message == WM_KEYUP) )
-    {
-        // When initializing win32k: Reading from the registry hotkey combination
-        // to switch the keyboard layout and store it to global variable.
-        // Using this combination of hotkeys in this function
-
-        if ( gdwLanguageToggleKey < 3 &&
-             IS_KEY_DOWN(gafAsyncKeyState, gdwLanguageToggleKey == 1 ? VK_LMENU : VK_CONTROL) )
-        {
-            if ( Msg->wParam == VK_SHIFT && !(IS_KEY_DOWN(gafAsyncKeyState, VK_SHIFT)))
-            {
-                WPARAM wParamILR;
-                PKL pkl = pti->KeyboardLayout;
-
-                if (pWnd) UserDerefObjectCo(pWnd);
-
-                //// Seems to override message window.
-                if (!(pWnd = pti->MessageQueue->spwndFocus))
-                {
-                     pWnd = pti->MessageQueue->spwndActive;
-                }
-                if (pWnd) UserRefObjectCo(pWnd, &Ref);
-
-                if (pkl != NULL && gLanguageToggleKeyState)
-                {
-                    TRACE("Posting WM_INPUTLANGCHANGEREQUEST KeyState %d\n", gLanguageToggleKeyState );
-
-                    wParamILR = gLanguageToggleKeyState;
-                    // If system character set and font signature send flag.
-                    if ( gSystemFS & pkl->dwFontSigs )
-                    {
-                       wParamILR |= INPUTLANGCHANGE_SYSCHARSET;
-                    }
-
-                    UserPostMessage( UserHMGetHandle(pWnd),
-                                     WM_INPUTLANGCHANGEREQUEST,
-                                     wParamILR,
-                                    (LPARAM)pkl->hkl );
-
-                    gLanguageToggleKeyState = 0;
-                    //// Keep looping.
-                    Ret = FALSE;
-                    //// Skip the rest.
-                    goto Exit;
-                }
             }
         }
     }

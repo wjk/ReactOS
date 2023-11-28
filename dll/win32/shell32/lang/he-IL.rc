@@ -137,7 +137,7 @@ BEGIN
     ICON "", IDC_ABOUT_ICON, 7, 55, 21, 20
     LTEXT "", IDC_ABOUT_APPNAME, 35, 55, 200, 10, SS_NOPREFIX
     LTEXT "", IDC_ABOUT_VERSION, 35, 65, 250, 10, SS_NOPREFIX
-    LTEXT "זכויות יוצרים 1998-", IDC_STATIC, 35, 75, 53, 10
+    LTEXT "זכויות יוצרים 1996-", IDC_STATIC, 35, 75, 53, 10
     LTEXT COPYRIGHT_YEAR, IDC_STATIC, 88, 75, 17, 10
     LTEXT " צוות ReactOS\0", IDC_STATIC, 105, 75, 53, 10
     LTEXT "", IDC_ABOUT_OTHERSTUFF, 35, 90, 180, 20, SS_NOPREFIX
@@ -489,7 +489,7 @@ CAPTION "התנתקות מ-ReactOS"
 FONT 8, "MS Shell Dlg"
 BEGIN
     ICON IDI_SHELL_LOGOFF, IDC_STATIC, 8, 6, 21, 20
-    LTEXT "האם אתה בטוח שברצונך להתנתק?", -1, 49, 15, 131, 8
+    LTEXT "האם אתה בטוח שברצונך להתנתק?", -1, 49, 15, 132, 8
     DEFPUSHBUTTON "התנתק", IDOK, 49, 38, 43, 14
     PUSHBUTTON "ביטול", IDCANCEL, 99, 38, 43, 14
 END

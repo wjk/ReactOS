@@ -985,6 +985,7 @@ typedef struct _FILE_ID_DESCRIPTOR {
     } DUMMYUNIONNAME;
 } FILE_ID_DESCRIPTOR, *LPFILE_ID_DESCRIPTOR;
 
+#if (NTDDI_VERSION >= NTDDI_LONGHORN) || defined(__REACTOS__)
 typedef enum _FILE_INFO_BY_HANDLE_CLASS {
     FileBasicInfo,
     FileStandardInfo,
@@ -1002,13 +1003,24 @@ typedef enum _FILE_INFO_BY_HANDLE_CLASS {
     FileRemoteProtocolInfo,
     FileFullDirectoryInfo,
     FileFullDirectoryRestartInfo,
+#if (NTDDI_VERSION >= NTDDI_WIN8) || defined(__REACTOS__)
     FileStorageInfo,
     FileAlignmentInfo,
     FileIdInfo,
     FileIdExtdDirectoryInfo,
     FileIdExtdDirectoryRestartInfo,
-    MaximumFileInfoByHandlesClass
+#endif
+#if (NTDDI_VERSION >= NTDDI_WIN10_RS1) || defined(__REACTOS__)
+    FileDispositionInfoEx,
+    FileRenameInfoEx,
+#endif
+#if (NTDDI_VERSION >= NTDDI_WIN10_19H1) || defined(__REACTOS__)
+    FileCaseSensitiveInfo,
+    FileNormalizedNameInfo,
+#endif
+    MaximumFileInfoByHandleClass
 } FILE_INFO_BY_HANDLE_CLASS, *PFILE_INFO_BY_HANDLE_CLASS;
+#endif
 
 typedef struct _FILE_ID_BOTH_DIR_INFO {
     DWORD         NextEntryOffset;
@@ -2004,25 +2016,7 @@ _Ret_maybenull_ HRSRC WINAPI FindResourceA(_In_opt_ HMODULE,_In_ LPCSTR, _In_ LP
 _Ret_maybenull_ HRSRC WINAPI FindResourceW(_In_opt_ HMODULE,_In_ LPCWSTR, _In_ LPCWSTR);
 _Ret_maybenull_ HRSRC WINAPI FindResourceExA(_In_opt_ HMODULE, _In_ LPCSTR, _In_ LPCSTR, _In_ WORD);
 HRSRC WINAPI FindResourceExW(HINSTANCE,LPCWSTR,LPCWSTR,WORD);
-#if (_WIN32_WINNT >= 0x0502)
 
-DWORD
-WINAPI
-GetFirmwareEnvironmentVariableA(
-  _In_ LPCSTR lpName,
-  _In_ LPCSTR lpGuid,
-  _Out_writes_bytes_to_opt_(nSize, return) PVOID pBuffer,
-  _In_ DWORD nSize);
-
-DWORD
-WINAPI
-GetFirmwareEnvironmentVariableW(
-  _In_ LPCWSTR lpName,
-  _In_ LPCWSTR lpGuid,
-  _Out_writes_bytes_to_opt_(nSize, return) PVOID pBuffer,
-  _In_ DWORD nSize);
-
-#endif
 BOOL WINAPI FlushFileBuffers(HANDLE);
 BOOL WINAPI FlushInstructionCache(HANDLE,LPCVOID,SIZE_T);
 BOOL WINAPI FlushViewOfFile(LPCVOID,SIZE_T);
@@ -2038,9 +2032,7 @@ BOOL WINAPI FreeLibrary(HMODULE);
 DECLSPEC_NORETURN void WINAPI FreeLibraryAndExitThread(HMODULE,DWORD);
 #define FreeModule(m) FreeLibrary(m)
 #define FreeProcInstance(p) (void)(p)
-#ifndef XFree86Server
 BOOL WINAPI FreeResource(HGLOBAL);
-#endif /* ndef XFree86Server */
 PVOID WINAPI FreeSid(PSID);
 BOOL WINAPI GetAce(PACL,DWORD,LPVOID*);
 BOOL WINAPI GetAclInformation(PACL,PVOID,DWORD,ACL_INFORMATION_CLASS);
@@ -2429,15 +2421,6 @@ VOID WINAPI GetStartupInfoW(LPSTARTUPINFOW);
 HANDLE WINAPI GetStdHandle(_In_ DWORD);
 UINT WINAPI GetSystemDirectoryA(LPSTR,UINT);
 UINT WINAPI GetSystemDirectoryW(LPWSTR,UINT);
-
-WINBASEAPI
-UINT
-WINAPI
-GetSystemFirmwareTable(
-  _In_ DWORD FirmwareTableProviderSignature,
-  _In_ DWORD FirmwareTableID,
-  _Out_writes_bytes_to_opt_(BufferSize,return) PVOID pFirmwareTableBuffer,
-  _In_ DWORD BufferSize);
 
 VOID WINAPI GetSystemInfo(LPSYSTEM_INFO);
 BOOL WINAPI GetSystemPowerStatus(_Out_ LPSYSTEM_POWER_STATUS);
@@ -3170,6 +3153,50 @@ BOOL WINAPI SetFileValidData(HANDLE,LONGLONG);
 
 #if (_WIN32_WINNT >= 0x0502)
 
+WINBASEAPI
+UINT
+WINAPI
+EnumSystemFirmwareTables(
+    _In_ DWORD FirmwareTableProviderSignature,
+    _Out_writes_bytes_to_opt_(BufferSize, return) PVOID pFirmwareTableEnumBuffer,
+    _In_ DWORD BufferSize);
+
+WINBASEAPI
+UINT
+WINAPI
+GetSystemFirmwareTable(
+    _In_ DWORD FirmwareTableProviderSignature,
+    _In_ DWORD FirmwareTableID,
+    _Out_writes_bytes_to_opt_(BufferSize, return) PVOID pFirmwareTableBuffer,
+    _In_ DWORD BufferSize);
+
+_Success_(return > 0)
+WINBASEAPI
+DWORD
+WINAPI
+GetFirmwareEnvironmentVariableA(
+    _In_ LPCSTR lpName,
+    _In_ LPCSTR lpGuid,
+    _Out_writes_bytes_to_opt_(nSize, return) PVOID pBuffer,
+    _In_ DWORD nSize);
+
+_Success_(return > 0)
+WINBASEAPI
+DWORD
+WINAPI
+GetFirmwareEnvironmentVariableW(
+    _In_ LPCWSTR lpName,
+    _In_ LPCWSTR lpGuid,
+    _Out_writes_bytes_to_opt_(nSize, return) PVOID pBuffer,
+    _In_ DWORD nSize);
+
+#ifdef UNICODE
+#define GetFirmwareEnvironmentVariable GetFirmwareEnvironmentVariableW
+#else
+#define GetFirmwareEnvironmentVariable GetFirmwareEnvironmentVariableA
+#endif
+
+WINBASEAPI
 BOOL
 WINAPI
 SetFirmwareEnvironmentVariableA(
@@ -3178,6 +3205,7 @@ SetFirmwareEnvironmentVariableA(
   _In_reads_bytes_opt_(nSize) PVOID pValue,
   _In_ DWORD nSize);
 
+WINBASEAPI
 BOOL
 WINAPI
 SetFirmwareEnvironmentVariableW(
@@ -3186,7 +3214,13 @@ SetFirmwareEnvironmentVariableW(
   _In_reads_bytes_opt_(nSize) PVOID pValue,
   _In_ DWORD nSize);
 
+#ifdef UNICODE
+#define SetFirmwareEnvironmentVariable SetFirmwareEnvironmentVariableW
+#else
+#define SetFirmwareEnvironmentVariable SetFirmwareEnvironmentVariableA
 #endif
+
+#endif /* _WIN32_WINNT >= 0x0502 */
 
 UINT WINAPI SetHandleCount(UINT);
 BOOL WINAPI SetHandleInformation(HANDLE,DWORD,DWORD);
@@ -3837,6 +3871,8 @@ typedef PRTL_RUN_ONCE LPINIT_ONCE;
 #define INIT_ONCE_ASYNC RTL_RUN_ONCE_ASYNC
 #define INIT_ONCE_INIT_FAILED RTL_RUN_ONCE_INIT_FAILED
 
+#define INIT_ONCE_CTX_RESERVED_BITS RTL_RUN_ONCE_CTX_RESERVED_BITS
+
 typedef BOOL
 (WINAPI *PINIT_ONCE_FN)(
   _Inout_ PINIT_ONCE InitOnce,
@@ -3961,14 +3997,41 @@ CopyFile2(
 
 #endif /* _WIN32_WINNT >= 0x0601 */
 
+#if (_WIN32_WINNT >= _WIN32_WINNT_VISTA) || (DLL_EXPORT_VERSION >= _WIN32_WINNT_VISTA)
+
+WINBASEAPI
+VOID
+WINAPI
+InitOnceInitialize(
+    _Out_ PINIT_ONCE InitOnce);
+
+WINBASEAPI
+BOOL
+WINAPI
+InitOnceBeginInitialize(
+    _Inout_ LPINIT_ONCE lpInitOnce,
+    _In_ DWORD dwFlags,
+    _Out_ PBOOL fPending,
+    _Outptr_opt_result_maybenull_ LPVOID *lpContext);
+
+WINBASEAPI
+BOOL
+WINAPI
+InitOnceComplete(
+    _Inout_ LPINIT_ONCE lpInitOnce,
+    _In_ DWORD dwFlags,
+    _In_opt_ LPVOID lpContext);
+
+#endif /* (_WIN32_WINNT >= _WIN32_WINNT_VISTA) || (DLL_EXPORT_VERSION >= _WIN32_WINNT_VISTA) */
+
 WINBASEAPI
 BOOL
 WINAPI
 InitOnceExecuteOnce(
-  _Inout_ PINIT_ONCE InitOnce,
-  _In_ __callback PINIT_ONCE_FN InitFn,
-  _Inout_opt_ PVOID Parameter,
-  _Outptr_opt_result_maybenull_ LPVOID *Context);
+    _Inout_ PINIT_ONCE InitOnce,
+    _In_ __callback PINIT_ONCE_FN InitFn,
+    _Inout_opt_ PVOID Parameter,
+    _Outptr_opt_result_maybenull_ LPVOID *Context);
 
 
 #if defined(_SLIST_HEADER_) && !defined(_NTOS_) && !defined(_NTOSP_)
