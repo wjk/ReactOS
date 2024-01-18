@@ -33,6 +33,13 @@ HalStartNextProcessor(
     return FALSE;
 }
 
+VOID
+HalpSetupProcessorsTable(
+    _In_ UINT32 NTProcessorNumber)
+{
+    NOTHING;
+}
+
 #ifdef _M_AMD64
 
 VOID
@@ -40,6 +47,7 @@ NTAPI
 HalSendNMI(
     _In_ KAFFINITY TargetSet)
 {
+    NOTHING;
 }
 
 VOID
@@ -48,6 +56,7 @@ HalSendSoftwareInterrupt(
     _In_ KAFFINITY TargetSet,
     _In_ KIRQL Irql)
 {
+    NOTHING;
 }
 
 #endif // _M_AMD64

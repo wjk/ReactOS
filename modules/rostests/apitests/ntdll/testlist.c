@@ -76,6 +76,7 @@ extern void func_RtlGetLengthWithoutLastFullDosOrNtPathElement(void);
 extern void func_RtlGetLengthWithoutTrailingPathSeperators(void);
 extern void func_RtlGetLongestNtPathLength(void);
 extern void func_RtlGetNtProductType(void);
+extern void func_RtlGetProcessHeaps(void);
 extern void func_RtlGetUnloadEventTrace(void);
 extern void func_RtlHandle(void);
 extern void func_RtlImageDirectoryEntryToData(void);
@@ -93,6 +94,7 @@ extern void func_RtlRemovePrivileges(void);
 extern void func_RtlUnicodeStringToAnsiString(void);
 extern void func_RtlUnicodeStringToCountedOemString(void);
 extern void func_RtlUnicodeToOemN(void);
+extern void func_RtlUnwind(void);
 extern void func_RtlUpcaseUnicodeStringToCountedOemString(void);
 extern void func_RtlValidateUnicodeString(void);
 extern void func_RtlxUnicodeStringToAnsiSize(void);
@@ -175,6 +177,7 @@ const struct test winetest_testlist[] =
     { "RtlGetLengthWithoutTrailingPathSeperators", func_RtlGetLengthWithoutTrailingPathSeperators },
     { "RtlGetLongestNtPathLength",      func_RtlGetLongestNtPathLength },
     { "RtlGetNtProductType",            func_RtlGetNtProductType },
+    { "RtlGetProcessHeaps",             func_RtlGetProcessHeaps },
     { "RtlGetUnloadEventTrace",         func_RtlGetUnloadEventTrace },
     { "RtlHandle",                      func_RtlHandle },
     { "RtlImageDirectoryEntryToData",   func_RtlImageDirectoryEntryToData },
@@ -199,6 +202,9 @@ const struct test winetest_testlist[] =
     { "StackOverflow",                  func_StackOverflow },
     { "TimerResolution",                func_TimerResolution },
     { "UserModeException",              func_UserModeException },
+#ifdef _M_IX86
+    { "RtlUnwind",                      func_RtlUnwind },
+#endif
 #ifdef _M_AMD64
     { "RtlCaptureContext",              func_RtlCaptureContext },
 #endif
