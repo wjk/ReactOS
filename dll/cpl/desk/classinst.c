@@ -4,7 +4,7 @@
  * FILE:            dll/cpl/desk/classinst.c
  * PURPOSE:         Class installers
  *
- * PROGRAMMERS:     Hervé Poussineau (hpoussin@reactos.org)
+ * PROGRAMMERS:     Hervï¿½ Poussineau (hpoussin@reactos.org)
  */
 
 #include "desk.h"
@@ -218,6 +218,41 @@ DisplayClassInstaller(
     /* Install SoftwareSettings section */
     /* Yes, we're installing this section for the second time.
      * We don't want to create a link to Settings subkey */
+    INFCONTEXT ContextManufacturer;
+    TCHAR ManufacturerSection[LINE_LEN + 1];
+    TCHAR SectionNameMod[MAX_PATH];
+    result = SetupFindFirstLine(hInf, _T("Manufacturer"), NULL, &ContextManufacturer);
+    if (!result)
+    {
+        rc = GetLastError();
+        DPRINT("SetupFindFirstLine() failed with error 0x%lx\n", rc);
+        goto cleanup;
+    }
+
+    result = SetupGetStringField(
+        &ContextManufacturer, 1, /* Field index */
+        ManufacturerSection, LINE_LEN, NULL);
+    if (!result)
+    {
+        rc = GetLastError();
+        DPRINT("SetupGetStringField() failed with error 0x%lx\n", rc);
+        goto cleanup;
+    }
+
+    StringCbCopy(SectionNameMod, sizeof(SectionNameMod), ManufacturerSection);
+    StringCbCat(SectionNameMod, sizeof(SectionNameMod), _T(".SoftwareSettings"));
+    result = SetupInstallFromInfSection(
+        InstallParams.hwndParent, hInf, SectionNameMod, SPINST_REGISTRY, hDeviceSubKey, NULL, 0, NULL, NULL,
+        NULL,
+        NULL);
+
+    if (!result)
+    {
+        rc = GetLastError();
+        DPRINT("SetupInstallFromInfSection() failed with error 0x%lx\n", rc);
+        goto cleanup;
+    }
+
     result = SetupInstallFromInfSection(
         InstallParams.hwndParent, hInf, SectionName,
         SPINST_REGISTRY, hDeviceSubKey,
