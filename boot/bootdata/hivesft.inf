@@ -226,6 +226,20 @@ HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer","NoSimpleStar
 HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Cpls",,0x00000012
 HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Cpls","Console",0x00020000,"%SystemRoot%\system32\console.dll"
 
+; Control Panel Applet Canonical Names
+HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Extended Properties\System.ApplicationName","%SystemRoot%\system32\timedate.cpl",0x00000000,"Microsoft.DateAndTime"
+HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Extended Properties\System.ApplicationName","%SystemRoot%\system32\inetcpl.cpl",0x00000000,"Microsoft.InternetOptions"
+HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Extended Properties\System.ApplicationName","%SystemRoot%\system32\powercfg.cpl",0x00000000,"Microsoft.PowerOptions"
+HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Extended Properties\System.ApplicationName","%SystemRoot%\system32\appwiz.cpl",0x00000000,"Microsoft.ProgramsAndFeatures"
+HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Extended Properties\System.ApplicationName","%SystemRoot%\system32\input.cpl",0x00000000,"Microsoft.Language"
+HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Extended Properties\System.ApplicationName","%SystemRoot%\system32\intl.cpl",0x00000000,"Microsoft.RegionAndLanguageOptions"
+HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Extended Properties\System.ApplicationName","%SystemRoot%\system32\mmsys.cpl",0x00000000,"Microsoft.Sound"
+HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Extended Properties\System.ApplicationName","%SystemRoot%\system32\sysdm.cpl",0x00000000,"Microsoft.System"
+HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Extended Properties\System.ApplicationName","%SystemRoot%\system32\usrmgr.cpl",0x00000000,"Microsoft.UserAccounts"
+HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Extended Properties\System.ApplicationName","%SystemRoot%\system32\hdwwiz.cpl",0x00000000,"Microsoft.AddHardware"
+HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Extended Properties\System.ApplicationName","%SystemRoot%\system32\telephon.cpl",0x00000000,"Microsoft.PhoneAndModemOptions"
+HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Extended Properties\System.ApplicationName","%SystemRoot%\system32\desk.cpl",0x00000000,"Microsoft.Personalization"
+
 ; Cursors Schemes
 HKLM,"SOFTWARE\Microsoft\Windows\CurrentVersion\Control Panel\Cursors\Schemes","ReactOS Default",0x00020000,""",,,,,,,,,,,,,"""
 
