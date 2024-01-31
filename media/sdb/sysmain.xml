@@ -259,6 +259,10 @@
             <SHIM NAME="VMHorizonSetup">
                 <DLLFILE>aclayers.dll</DLLFILE>
             </SHIM>
+            <SHIM NAME="VirtualBoxClassInstaller">
+                <DLLFILE>aclayers.dll</DLLFILE>
+                <DESCRIPTION>Fixes VirtualBox display class installer (see PR #6026).</DESCRIPTION>
+            </SHIM>
 
             <!--<SHIM NAME="HideShimEnv">
                 <DLLFILE>aclayers.dll</DLLFILE>
@@ -313,18 +317,22 @@
         </LAYER>
         <LAYER NAME="WINXP">
             <SHIM_REF NAME="WinXPVersionLie" />
+            <SHIM_REF NAME="VirtualBoxClassInstaller" />
             <!-- TODO: Add more fixes! -->
         </LAYER>
         <LAYER NAME="WINXPSP1">
             <SHIM_REF NAME="WinXPSP1VersionLie" />
+            <SHIM_REF NAME="VirtualBoxClassInstaller" />
             <!-- TODO: Add more fixes! -->
         </LAYER>
         <LAYER NAME="WINXPSP2">
             <SHIM_REF NAME="WinXPSP2VersionLie" />
+            <SHIM_REF NAME="VirtualBoxClassInstaller" />
             <!-- TODO: Add more fixes! -->
         </LAYER>
         <LAYER NAME="WINXPSP3">
             <SHIM_REF NAME="WinXPSP3VersionLie" />
+            <SHIM_REF NAME="VirtualBoxClassInstaller" />
             <!-- TODO: Add more fixes! -->
         </LAYER>
         <LAYER NAME="WINSRV03RTM">
