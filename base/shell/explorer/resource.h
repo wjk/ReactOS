@@ -106,6 +106,18 @@
 #define IDS_TRAYWND_UNDO_CASCADE           812
 #define IDS_TRAYWND_UNDO_TILE              813
 
+/* These values must be synchronized with shell32 */
+#define IDS_ADVANCED_DISPLAY_FAVORITES              30466
+#define IDS_ADVANCED_DISPLAY_LOG_OFF                30467
+#define IDS_ADVANCED_EXPAND_CONTROL_PANEL           30468
+#define IDS_ADVANCED_EXPAND_MY_DOCUMENTS            30469
+#define IDS_ADVANCED_EXPAND_PRINTERS                30470
+#define IDS_ADVANCED_EXPAND_MY_PICTURES             30472
+#define IDS_ADVANCED_EXPAND_NET_CONNECTIONS         30473
+#define IDS_ADVANCED_DISPLAY_RUN                    30474
+#define IDS_ADVANCED_DISPLAY_ADMINTOOLS             30476
+#define IDS_ADVANCED_SMALL_START_MENU               30477
+
 /*******************************************************************************\
 |*                              Control Resources                              *|
 \*******************************************************************************/
@@ -189,8 +201,6 @@
 #define IDMA_RESTORE_OPEN 416
 #define IDMA_MINIMIZE_ALL 419
 
-#define ID_SHELL_CMD_FIRST              0xF
-#define ID_SHELL_CMD_LAST               0x7FEF
 #define ID_SHELL_CMD_PROPERTIES         (401)
 #define ID_SHELL_CMD_OPEN_ALL_USERS     (402)
 #define ID_SHELL_CMD_EXPLORE_ALL_USERS  (403)
@@ -204,3 +214,5 @@
 #define ID_SHELL_CMD_CUST_NOTIF         (411)
 #define ID_SHELL_CMD_ADJUST_DAT         (412)
 #define ID_SHELL_CMD_RESTORE_ALL        (413)
+#define ID_SHELL_CMD_FIRST              ID_SHELL_CMD_PROPERTIES
+#define ID_SHELL_CMD_LAST               ID_SHELL_CMD_RESTORE_ALL

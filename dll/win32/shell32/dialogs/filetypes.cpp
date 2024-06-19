@@ -66,7 +66,12 @@ DeleteExt(HWND hwndDlg, LPCWSTR pszExt)
         SHDeleteKeyW(HKEY_CLASSES_ROOT, szValue);
 
     // delete ".ext" key
-    return SHDeleteKeyW(HKEY_CLASSES_ROOT, pszExt) == ERROR_SUCCESS;
+    BOOL ret = (SHDeleteKeyW(HKEY_CLASSES_ROOT, pszExt) == ERROR_SUCCESS);
+
+    // notify
+    SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_FLUSHNOWAIT, NULL, NULL);
+
+    return ret;
 }
 
 static inline HICON
@@ -666,6 +671,7 @@ FileTypesDlg_InsertToLV(HWND hListView, LPCWSTR szName, INT iItem, LPCWSTR szFil
         iLargeImage = ImageList_AddIcon(himlLarge, Entry->hIconLarge);
         iSmallImage = ImageList_AddIcon(himlSmall, Entry->hIconSmall);
         ASSERT(iLargeImage == iSmallImage);
+        DBG_UNREFERENCED_LOCAL_VARIABLE(iLargeImage);
     }
 
     // Do not add excluded entries
@@ -1041,6 +1047,7 @@ EditTypeDlg_UpdateEntryIcon(HWND hwndDlg, PEDITTYPE_DIALOG pEditType,
     INT iLargeImage = ImageList_AddIcon(himlLarge, pEntry->hIconLarge);
     INT iSmallImage = ImageList_AddIcon(himlSmall, pEntry->hIconSmall);
     ASSERT(iLargeImage == iSmallImage);
+    DBG_UNREFERENCED_LOCAL_VARIABLE(iLargeImage);
 
     INT iItem = ListView_GetNextItem(hListView, -1, LVNI_SELECTED);
     if (iItem != -1)

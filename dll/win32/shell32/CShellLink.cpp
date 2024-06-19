@@ -2572,7 +2572,7 @@ HRESULT STDMETHODCALLTYPE CShellLink::InvokeCommand(LPCMINVOKECOMMANDINFO lpici)
     HRESULT hr = Resolve(lpici->hwnd, 0);
     if (FAILED(hr))
     {
-        TRACE("failed to resolve component with error 0x%08x\n", hr);
+        TRACE("failed to resolve component error 0x%08x\n", hr);
         return hr;
     }
 
@@ -2595,9 +2595,10 @@ HRESULT CShellLink::DoOpen(LPCMINVOKECOMMANDINFO lpici)
     HRESULT hr;
     LPWSTR args = NULL;
     LPWSTR path = strdupW(m_sPath);
+    BOOL unicode = lpici->cbSize >= FIELD_OFFSET(CMINVOKECOMMANDINFOEX, ptInvoke) &&
+                   (lpici->fMask & CMIC_MASK_UNICODE);
 
-    if ( lpici->cbSize == sizeof(CMINVOKECOMMANDINFOEX) &&
-        (lpici->fMask & CMIC_MASK_UNICODE) )
+    if (unicode)
     {
         LPCMINVOKECOMMANDINFOEX iciex = (LPCMINVOKECOMMANDINFOEX)lpici;
         SIZE_T len = 2;
@@ -2627,11 +2628,19 @@ HRESULT CShellLink::DoOpen(LPCMINVOKECOMMANDINFO lpici)
     sei.cbSize = sizeof(sei);
     sei.fMask = SEE_MASK_HASLINKNAME | SEE_MASK_UNICODE |
                (lpici->fMask & (SEE_MASK_NOASYNC | SEE_MASK_ASYNCOK | SEE_MASK_FLAG_NO_UI));
-    sei.lpFile = path;
+    if (m_pPidl)
+    {
+        sei.lpIDList = m_pPidl;
+        sei.fMask |= SEE_MASK_IDLIST;
+    }
+    else
+    {
+        sei.lpFile = path;
+    }
+    sei.lpParameters = args;
     sei.lpClass = m_sLinkPath;
     sei.nShow = m_Header.nShowCommand;
     sei.lpDirectory = m_sWorkDir;
-    sei.lpParameters = args;
     sei.lpVerb = L"open";
 
     // HACK for ShellExecuteExW
@@ -3147,11 +3156,21 @@ HICON CShellLink::CreateShortcutIcon(LPCWSTR wszIconPath, INT IconIndex)
 {
     const INT cx = GetSystemMetrics(SM_CXICON), cy = GetSystemMetrics(SM_CYICON);
     const COLORREF crMask = GetSysColor(COLOR_3DFACE);
+    WCHAR wszLnkIcon[MAX_PATH];
+    int lnk_idx;
     HDC hDC;
     HIMAGELIST himl = ImageList_Create(cx, cy, ILC_COLOR32 | ILC_MASK, 1, 1);
-    HICON hIcon = NULL, hNewIcon = NULL;
-    HICON hShortcut = (HICON)LoadImageW(shell32_hInstance, MAKEINTRESOURCE(IDI_SHELL_SHORTCUT),
-                                        IMAGE_ICON, cx, cy, 0);
+    HICON hIcon = NULL, hNewIcon = NULL, hShortcut;
+
+    if (HLM_GetIconW(IDI_SHELL_SHORTCUT - 1, wszLnkIcon, _countof(wszLnkIcon), &lnk_idx))
+    {
+        ::ExtractIconExW(wszLnkIcon, lnk_idx, &hShortcut, NULL, 1);
+    }
+    else
+    {
+        hShortcut = (HICON)LoadImageW(shell32_hInstance, MAKEINTRESOURCE(IDI_SHELL_SHORTCUT),
+                                      IMAGE_ICON, cx, cy, 0);
+    }
 
     ::ExtractIconExW(wszIconPath, IconIndex, &hIcon, NULL, 1);
     if (!hIcon || !hShortcut || !himl)

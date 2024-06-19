@@ -4,6 +4,10 @@ set(USE_DIBLIB FALSE)
 # Give WIN32 subsystem its own project.
 PROJECT(WIN32SS)
 
+if (NATIVE_REACTX)
+    add_definitions(-DNATIVE_REACTX)
+endif()
+
 add_subdirectory(drivers)
 
 if(USE_DIBLIB)
@@ -15,6 +19,7 @@ add_subdirectory(gdi/gdi32_vista)
 add_subdirectory(printing)
 add_subdirectory(reactx)
 add_subdirectory(user/user32)
+add_subdirectory(user/user32_vista)
 add_subdirectory(user/winsrv)
 
 spec2def(win32k.sys win32k.spec ADD_IMPORTLIB)

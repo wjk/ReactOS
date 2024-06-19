@@ -7,7 +7,7 @@
  */
 
 #include <win32k.h>
-#include <ddk/immdev.h>
+#include <immdev.h>
 DBG_DEFAULT_CHANNEL(UserFocus);
 
 PUSER_MESSAGE_QUEUE gpqForeground = NULL;
@@ -340,6 +340,9 @@ IntDeactivateWindow(PTHREADINFO pti, HANDLE tid)
       }
       UserDerefObjectCo(pwndFocus);
    }
+
+   /* Check for keyboard modifiers and release them (CORE-14768) */
+   MsqReleaseModifierKeys(pti->MessageQueue);
 
    if (InAAPM) pti->TIF_flags &= ~TIF_INACTIVATEAPPMSG;
    if (ptiCurrent != pti)

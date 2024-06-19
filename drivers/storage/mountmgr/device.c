@@ -330,11 +330,8 @@ MountMgrCheckUnprocessedVolumes(IN PDEVICE_EXTENSION DeviceExtension,
 BOOLEAN
 IsFtVolume(IN PUNICODE_STRING SymbolicName)
 {
-    PIRP Irp;
-    KEVENT Event;
     NTSTATUS Status;
     PFILE_OBJECT FileObject;
-    IO_STATUS_BLOCK IoStatusBlock;
     PARTITION_INFORMATION PartitionInfo;
     PDEVICE_OBJECT DeviceObject, FileDeviceObject;
 
@@ -344,9 +341,7 @@ IsFtVolume(IN PUNICODE_STRING SymbolicName)
                                       &FileObject,
                                       &DeviceObject);
     if (!NT_SUCCESS(Status))
-    {
         return FALSE;
-    }
 
     /* Get attached device */
     FileDeviceObject = FileObject->DeviceObject;
@@ -363,34 +358,17 @@ IsFtVolume(IN PUNICODE_STRING SymbolicName)
     ObDereferenceObject(FileObject);
 
     /* Get partition information */
-    KeInitializeEvent(&Event, NotificationEvent, FALSE);
-    Irp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_PARTITION_INFO,
-                                        DeviceObject,
-                                        NULL,
-                                        0,
-                                        &PartitionInfo,
-                                        sizeof(PartitionInfo),
-                                        FALSE,
-                                        &Event,
-                                        &IoStatusBlock);
-    if (!Irp)
-    {
-        ObDereferenceObject(DeviceObject);
-        return FALSE;
-    }
-
-    Status = IoCallDriver(DeviceObject, Irp);
-    if (Status == STATUS_PENDING)
-    {
-        KeWaitForSingleObject(&Event, Executive, KernelMode, FALSE, NULL);
-        Status = IoStatusBlock.Status;
-    }
+    Status = MountMgrSendSyncDeviceIoCtl(IOCTL_DISK_GET_PARTITION_INFO,
+                                         DeviceObject,
+                                         NULL,
+                                         0,
+                                         &PartitionInfo,
+                                         sizeof(PartitionInfo),
+                                         NULL);
 
     ObDereferenceObject(DeviceObject);
     if (!NT_SUCCESS(Status))
-    {
         return FALSE;
-    }
 
     /* Check if this is a FT volume */
     return IsFTPartition(PartitionInfo.PartitionType);
@@ -2793,9 +2771,6 @@ MountMgrDeviceControl(IN PDEVICE_OBJECT DeviceObject,
             Status = MountMgrSetAutoMount(DeviceExtension, Irp);
             break;
 
-        case IOCTL_MOUNTMGR_DEFINE_UNIX_DRIVE:
-        case IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE:
-            DPRINT1("Winism! Rewrite the caller!\n");
         default:
             Status = STATUS_INVALID_DEVICE_REQUEST;
     }
