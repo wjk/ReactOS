@@ -127,6 +127,8 @@ extern const GUID SHELL32_AdvtShortcutComponent;
 
 #define MAX_PROPERTY_SHEET_PAGE 32
 
+#define VERBKEY_CCHMAX 64 // Note: 63+\0 seems to be the limit on XP
+
 extern inline
 BOOL
 CALLBACK
@@ -163,6 +165,8 @@ public:
     BEGIN_MSG_MAP(CStubWindow32)
     END_MSG_MAP()
 };
+
+void PostCabinetMessage(UINT Msg, WPARAM wParam, LPARAM lParam);
 
 HRESULT
 Shell_TranslateIDListAlias(
@@ -228,6 +232,9 @@ BOOL PathIsDotOrDotDotW(_In_ LPCWSTR pszPath);
 BOOL PathIsValidElement(_In_ LPCWSTR pszPath);
 BOOL PathIsDosDevice(_In_ LPCWSTR pszName);
 HRESULT SHILAppend(_Inout_ LPITEMIDLIST pidl, _Inout_ LPITEMIDLIST *ppidl);
+
+PIDLIST_ABSOLUTE SHELL_CIDA_ILCloneFull(_In_ const CIDA *pCIDA, _In_ UINT Index);
+PIDLIST_ABSOLUTE SHELL_DataObject_ILCloneFullItem(_In_ IDataObject *pDO, _In_ UINT Index);
 
 EXTERN_C HRESULT
 IUnknown_InitializeCommand(

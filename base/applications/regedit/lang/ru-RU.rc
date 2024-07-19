@@ -1,3 +1,16 @@
+/*
+ * PROJECT:     ReactOS Registry Editor
+ * LICENSE:     LGPL-2.1-or-later (https://spdx.org/licenses/LGPL-2.1-or-later)
+ * PURPOSE:     Russian resource file
+ * TRANSLATORS: Copyright 2003 Igor Stepin <is@istudio.ru>
+ *              Copyright 2006 Anton Belitsky (bmoof) <fidoworld@mail.ru>
+ *              Copyright 2008 Dmitry Chapyshev <dmitry@reactos.org>
+ *              Copyright 2011 Igor Paliychuk <mansonigor@gmail.com>
+ *              Copyright 2014 Alexey Gorgurov <leha-bot@ya.ru>
+ *              Copyright 2014 Kudratov Olimjon <olim98@bk.ru>
+ *              Copyright 2020-2024 Stanislav Motylkov <binarymaster@mail.ru>
+ */
+
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 ID_ACCEL ACCELERATORS
@@ -83,9 +96,9 @@ BEGIN
     POPUP "&Файл"
     BEGIN
         MENUITEM "&Импортировать из файла...", ID_REGISTRY_IMPORTREGISTRYFILE
-        MENUITEM "&Экспортировать в файл...", ID_REGISTRY_EXPORTREGISTRYFILE //FIXME: accelerator collision &Э
+        MENUITEM "&Экспортировать в файл...", ID_REGISTRY_EXPORTREGISTRYFILE
         MENUITEM SEPARATOR
-        MENUITEM "&Загрузить куст...", ID_REGISTRY_LOADHIVE, GRAYED //FIXME: accelerator collision &Э. I decided to use "З&агрузить куст..." to fix the collision in the older releases. But I don't have a russian Windows.
+        MENUITEM "&Загрузить куст...", ID_REGISTRY_LOADHIVE, GRAYED
         MENUITEM "&Выгрузить куст...", ID_REGISTRY_UNLOADHIVE, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&Подключить сетевой реестр...", ID_REGISTRY_CONNECTNETWORKREGISTRY
@@ -656,8 +669,8 @@ STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_B
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX "Диапазон экспорта", IDC_STATIC, 2, 0, 366, 48
-    CONTROL "&Весь реестр", IDC_EXPORT_ALL, "Button", BS_AUTORADIOBUTTON, 10, 10, 70, 11
-    CONTROL "В&ыбранная ветвь", IDC_EXPORT_BRANCH, "Button", BS_AUTORADIOBUTTON, 10, 22, 100, 11
+    AUTORADIOBUTTON "&Весь реестр", IDC_EXPORT_ALL, 10, 10, 99, 11, WS_GROUP | WS_TABSTOP
+    AUTORADIOBUTTON "В&ыбранная ветвь", IDC_EXPORT_BRANCH, 10, 22, 99, 11
     EDITTEXT IDC_EXPORT_BRANCH_TEXT, 30, 34, 335, 12
 END
 

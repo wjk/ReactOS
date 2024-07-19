@@ -528,11 +528,11 @@ CFSFolder::~CFSFolder()
 }
 
 static const shvheader GenericSFHeader[] = {
-    {IDS_SHV_COLUMN_NAME, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 15},
+    {IDS_SHV_COLUMN_NAME, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 18},
     {IDS_SHV_COLUMN_SIZE, SHCOLSTATE_TYPE_INT | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
     {IDS_SHV_COLUMN_TYPE, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 10},
     {IDS_SHV_COLUMN_MODIFIED, SHCOLSTATE_TYPE_DATE | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 15},
-    {IDS_SHV_COLUMN_ATTRIBUTES, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 10},
+    {IDS_SHV_COLUMN_ATTRIBUTES, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_LEFT, 8},
     {IDS_SHV_COLUMN_COMMENTS, SHCOLSTATE_TYPE_STR | SHCOLSTATE_SLOW, LVCFMT_LEFT, 10},  // We don't currently support comments but CRegFolder does
 };
 
@@ -1355,20 +1355,10 @@ HRESULT WINAPI CFSFolder::GetUIObjectOf(HWND hwndOwner,
 BOOL SHELL_FS_HideExtension(LPCWSTR szPath)
 {
     HKEY hKey;
-    DWORD dwData, dwDataSize = sizeof(DWORD);
     BOOL doHide = FALSE; /* The default value is FALSE (win98 at least) */
     LONG lError;
 
-    lError = RegCreateKeyExW(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
-                             0, NULL, 0, KEY_ALL_ACCESS, NULL,
-                             &hKey, NULL);
-    if (lError == ERROR_SUCCESS)
-    {
-        lError = RegQueryValueExW(hKey, L"HideFileExt", NULL, NULL, (LPBYTE)&dwData, &dwDataSize);
-        if (lError == ERROR_SUCCESS)
-            doHide = dwData;
-        RegCloseKey(hKey);
-    }
+    doHide = !SHELL_GetSetting(SSF_SHOWEXTENSIONS, fShowExtensions);
 
     if (!doHide)
     {

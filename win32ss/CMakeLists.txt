@@ -147,6 +147,7 @@ list(APPEND SOURCE
     user/ntuser/ntstubs.c
     user/ntuser/ntuser.c
     user/ntuser/painting.c
+    user/ntuser/power.c
     user/ntuser/prop.c
     user/ntuser/scrollbar.c
     user/ntuser/scrollex.c
@@ -164,6 +165,7 @@ list(APPEND SOURCE
     user/ntuser/winpos.c
     user/ntuser/winsta.c
     user/ntuser/object.c
+    user/rtl/image.c
     user/rtl/text.c
     gdi/ntgdi/arc.c
     gdi/ntgdi/bezier.c

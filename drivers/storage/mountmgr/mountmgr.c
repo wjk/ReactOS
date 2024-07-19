@@ -271,14 +271,15 @@ CreateNewDriveLetterName(OUT PUNICODE_STRING DriveLetter,
  * @implemented
  */
 NTSTATUS
-QueryDeviceInformation(IN PUNICODE_STRING SymbolicName,
-                       OUT PUNICODE_STRING DeviceName OPTIONAL,
-                       OUT PMOUNTDEV_UNIQUE_ID * UniqueId OPTIONAL,
-                       OUT PBOOLEAN Removable OPTIONAL,
-                       OUT PBOOLEAN GptDriveLetter OPTIONAL,
-                       OUT PBOOLEAN HasGuid OPTIONAL,
-                       IN OUT LPGUID StableGuid OPTIONAL,
-                       OUT PBOOLEAN Valid OPTIONAL)
+QueryDeviceInformation(
+    _In_ PUNICODE_STRING SymbolicName,
+    _Out_opt_ PUNICODE_STRING DeviceName,
+    _Out_opt_ PMOUNTDEV_UNIQUE_ID* UniqueId,
+    _Out_opt_ PBOOLEAN Removable,
+    _Out_opt_ PBOOLEAN GptDriveLetter,
+    _Out_opt_ PBOOLEAN HasGuid,
+    _Inout_opt_ LPGUID StableGuid,
+    _Out_opt_ PBOOLEAN IsFT)
 {
     NTSTATUS Status;
     USHORT Size;
@@ -334,15 +335,7 @@ QueryDeviceInformation(IN PUNICODE_STRING SymbolicName,
                                                  &GptAttributes,
                                                  sizeof(GptAttributes),
                                                  NULL);
-#if 0
-            if (Status == STATUS_INSUFFICIENT_RESOURCES)
-            {
-                ObDereferenceObject(DeviceObject);
-                ObDereferenceObject(FileObject);
-                return Status;
-            }
-#endif
-            /* In case of failure, don't fail, that's no vital */
+            /* Failure isn't major */
             if (!NT_SUCCESS(Status))
             {
                 Status = STATUS_SUCCESS;
@@ -355,15 +348,16 @@ QueryDeviceInformation(IN PUNICODE_STRING SymbolicName,
         }
     }
 
-    /* If caller wants to know if there's valid contents */
-    if (Valid)
+    /* If caller wants to know if this is a FT volume */
+    if (IsFT)
     {
-        /* Suppose it's not OK */
-        *Valid = FALSE;
+        /* Suppose it's not */
+        *IsFT = FALSE;
 
+        /* FT volume can't be removable */
         if (!IsRemovable)
         {
-            /* Query partitions information */
+            /* Query partition information */
             Status = MountMgrSendSyncDeviceIoCtl(IOCTL_DISK_GET_PARTITION_INFO_EX,
                                                  DeviceObject,
                                                  NULL,
@@ -371,28 +365,22 @@ QueryDeviceInformation(IN PUNICODE_STRING SymbolicName,
                                                  &PartitionInfo,
                                                  sizeof(PartitionInfo),
                                                  NULL);
-#if 0
-            if (Status == STATUS_INSUFFICIENT_RESOURCES)
-            {
-                ObDereferenceObject(DeviceObject);
-                ObDereferenceObject(FileObject);
-                return Status;
-            }
-#endif
-            /* Once again here, failure isn't major */
+            /* Failure isn't major */
             if (!NT_SUCCESS(Status))
             {
                 Status = STATUS_SUCCESS;
             }
-            /* Verify we know something in */
-            else if (PartitionInfo.PartitionStyle == PARTITION_STYLE_MBR &&
-                     IsRecognizedPartition(PartitionInfo.Mbr.PartitionType))
+            /* Check if this is a FT volume */
+            else if ((PartitionInfo.PartitionStyle == PARTITION_STYLE_MBR) &&
+                     IsFTPartition(PartitionInfo.Mbr.PartitionType))
             {
-                *Valid = TRUE;
+                *IsFT = TRUE;
             }
 
-            /* It looks correct, ensure it is & query device number */
-            if (*Valid)
+            /* It looks like a FT volume. Verify it is really one by checking
+             * that it does NOT lie on a specific storage device (i.e. it is
+             * not a basic volume). */
+            if (*IsFT)
             {
                 Status = MountMgrSendSyncDeviceIoCtl(IOCTL_STORAGE_GET_DEVICE_NUMBER,
                                                      DeviceObject,
@@ -401,18 +389,10 @@ QueryDeviceInformation(IN PUNICODE_STRING SymbolicName,
                                                      &StorageDeviceNumber,
                                                      sizeof(StorageDeviceNumber),
                                                      NULL);
-#if 0
-                if (Status == STATUS_INSUFFICIENT_RESOURCES)
-                {
-                    ObDereferenceObject(DeviceObject);
-                    ObDereferenceObject(FileObject);
-                    return Status;
-                }
-#endif
                 if (!NT_SUCCESS(Status))
                     Status = STATUS_SUCCESS;
                 else
-                    *Valid = FALSE;
+                    *IsFT = FALSE; // Succeeded, so this cannot be a FT volume.
             }
         }
     }
@@ -835,26 +815,27 @@ MountMgrUnload(IN PDRIVER_OBJECT DriverObject)
     IoDeleteDevice(gdeviceObject);
 }
 
-/*
- * @implemented
- */
+/**
+ * @brief   Retrieves the "NoAutoMount" setting.
+ * @return  TRUE if AutoMount is disabled; FALSE if AutoMount is enabled.
+ **/
 CODE_SEG("INIT")
 BOOLEAN
-MountmgrReadNoAutoMount(IN PUNICODE_STRING RegistryPath)
+MountmgrReadNoAutoMount(
+    _In_ PUNICODE_STRING RegistryPath)
 {
     NTSTATUS Status;
     ULONG Result, Default = 0;
     RTL_QUERY_REGISTRY_TABLE QueryTable[2];
 
+    /* Retrieve data from registry */
     RtlZeroMemory(QueryTable, sizeof(QueryTable));
-
-    /* Simply read data from register */
     QueryTable[0].Flags = RTL_QUERY_REGISTRY_DIRECT;
     QueryTable[0].Name = L"NoAutoMount";
     QueryTable[0].EntryContext = &Result;
-    QueryTable[0].DefaultType = REG_NONE;
+    QueryTable[0].DefaultType = REG_DWORD;
     QueryTable[0].DefaultData = &Default;
-    QueryTable[0].DefaultLength = sizeof(ULONG);
+    QueryTable[0].DefaultLength = sizeof(Default);
 
     Status = RtlQueryRegistryValues(RTL_REGISTRY_ABSOLUTE,
                                     RegistryPath->Buffer,
@@ -862,9 +843,7 @@ MountmgrReadNoAutoMount(IN PUNICODE_STRING RegistryPath)
                                     NULL,
                                     NULL);
     if (!NT_SUCCESS(Status))
-    {
-        return (Default != 0);
-    }
+        Result = Default;
 
     return (Result != 0);
 }
@@ -891,7 +870,8 @@ MountMgrMountedDeviceArrival(IN PDEVICE_EXTENSION DeviceExtension,
     PDEVICE_INFORMATION DeviceInformation, CurrentDevice;
     WCHAR CSymLinkBuffer[RTL_NUMBER_OF(Cunc)], LinkTargetBuffer[MAX_PATH];
     UNICODE_STRING TargetDeviceName, SuggestedLinkName, DeviceName, VolumeName, DriveLetter, LinkTarget, CSymLink;
-    BOOLEAN HasGuid, HasGptDriveLetter, Valid, UseOnlyIfThereAreNoOtherLinks, IsDrvLetter, IsOff, IsVolumeName, LinkError;
+    BOOLEAN HasGuid, HasGptDriveLetter, IsFT, UseOnlyIfThereAreNoOtherLinks;
+    BOOLEAN IsDrvLetter, IsOff, IsVolumeName, SetOnline;
 
     /* New device = new structure to represent it */
     DeviceInformation = AllocatePool(sizeof(DEVICE_INFORMATION));
@@ -928,7 +908,7 @@ MountMgrMountedDeviceArrival(IN PDEVICE_EXTENSION DeviceExtension,
                                     &HasGptDriveLetter,
                                     &HasGuid,
                                     &StableGuid,
-                                    &Valid);
+                                    &IsFT);
     if (!NT_SUCCESS(Status))
     {
         KeWaitForSingleObject(&(DeviceExtension->DeviceLock), Executive, KernelMode, FALSE, NULL);
@@ -1152,7 +1132,7 @@ MountMgrMountedDeviceArrival(IN PDEVICE_EXTENSION DeviceExtension,
         Status = GlobalCreateSymbolicLink(&(SymLinks[i]), &TargetDeviceName);
         if (!NT_SUCCESS(Status))
         {
-            LinkError = TRUE;
+            BOOLEAN LinkError = TRUE;
 
             if ((SavedLinkInformation && !RedirectSavedLink(SavedLinkInformation, &(SymLinks[i]), &TargetDeviceName)) ||
                 !SavedLinkInformation)
@@ -1258,7 +1238,7 @@ MountMgrMountedDeviceArrival(IN PDEVICE_EXTENSION DeviceExtension,
         DeviceInformation->SuggestedDriveLetter = 0;
     }
     /* Else, it's time to set up one */
-    else if ((DeviceExtension->NoAutoMount || DeviceInformation->Removable) &&
+    else if ((!DeviceExtension->NoAutoMount || DeviceInformation->Removable) &&
              DeviceExtension->AutomaticDriveLetter &&
              (HasGptDriveLetter || DeviceInformation->SuggestedDriveLetter) &&
              !HasNoDriveLetterEntry(UniqueId))
@@ -1316,32 +1296,23 @@ MountMgrMountedDeviceArrival(IN PDEVICE_EXTENSION DeviceExtension,
         RtlCopyMemory(NewUniqueId->UniqueId, UniqueId->UniqueId, UniqueId->UniqueIdLength);
     }
 
-    /* If device's offline or valid, skip its notifications */
-    if (IsOff || Valid)
-    {
+    /* Skip online notifications if the device is offline or a FT volume */
+    if (IsOff || IsFT)
         DeviceInformation->SkipNotifications = TRUE;
-    }
 
-    /* In case device is valid and is set to no automount,
-     * set it offline.
-     */
-    if (DeviceExtension->NoAutoMount || IsDrvLetter)
-    {
-        IsOff = !DeviceInformation->SkipNotifications;
-    }
+    /* If automount is enabled or the device was already mounted, send now
+     * the online notification if needed; otherwise, defer its posting */
+    if (!DeviceExtension->NoAutoMount || IsDrvLetter)
+        SetOnline = !DeviceInformation->SkipNotifications;
     else
-    {
-        IsOff = FALSE;
-    }
+        SetOnline = FALSE;
 
     /* Finally, release the exclusive lock */
     KeReleaseSemaphore(&(DeviceExtension->DeviceLock), IO_NO_INCREMENT, 1, FALSE);
 
-    /* If device is not offline, notify its arrival */
-    if (!IsOff)
-    {
+    /* Set the device online now if necessary */
+    if (SetOnline)
         SendOnlineNotification(SymbolicName);
-    }
 
     /* If we had symlinks (from storage), free them */
     if (SymLinks)
