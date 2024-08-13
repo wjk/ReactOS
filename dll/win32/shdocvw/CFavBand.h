@@ -1,17 +1,11 @@
 /*
- * PROJECT:     ReactOS Explorer
+ * PROJECT:     ReactOS shdocvw
  * LICENSE:     LGPL-2.1-or-later (https://spdx.org/licenses/LGPL-2.1-or-later)
  * PURPOSE:     Favorites bar
  * COPYRIGHT:   Copyright 2024 Katayama Hirofumi MZ <katayama.hirofumi.mz@gmail.com>
  */
 
 #pragma once
-
-EXTERN_C VOID CFavBand_Init(HINSTANCE hInstance);
-EXTERN_C HRESULT CFavBand_DllCanUnloadNow(VOID);
-EXTERN_C HRESULT CFavBand_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
-EXTERN_C HRESULT CFavBand_DllRegisterServer(VOID);
-EXTERN_C HRESULT CFavBand_DllUnregisterServer(VOID);
 
 #define FAVBANDCLASSNAME L"ReactOS Favorites Band"
 
@@ -99,11 +93,17 @@ public:
     STDMETHODIMP Select(long paramC) override;
 
     // *** INamespaceProxy methods ***
-    STDMETHODIMP GetNavigateTarget(long paramC, long param10, long param14) override;
-    STDMETHODIMP Invoke(long paramC) override;
-    STDMETHODIMP OnSelectionChanged(long paramC) override;
-    STDMETHODIMP RefreshFlags(long paramC, long param10, long param14) override;
-    STDMETHODIMP CacheItem(long paramC) override;
+    STDMETHODIMP GetNavigateTarget(
+        _In_ PCIDLIST_ABSOLUTE pidl,
+        _Out_ PIDLIST_ABSOLUTE ppidlTarget,
+        _Out_ ULONG *pulAttrib) override;
+    STDMETHODIMP Invoke(_In_ PCIDLIST_ABSOLUTE pidl) override;
+    STDMETHODIMP OnSelectionChanged(_In_ PCIDLIST_ABSOLUTE pidl) override;
+    STDMETHODIMP RefreshFlags(
+        _Out_ DWORD *pdwStyle,
+        _Out_ DWORD *pdwExStyle,
+        _Out_ DWORD *dwEnum) override;
+    STDMETHODIMP CacheItem(_In_ PCIDLIST_ABSOLUTE pidl) override;
 
     // *** IDispatch methods ***
     STDMETHODIMP GetTypeInfoCount(UINT *pctinfo) override;
