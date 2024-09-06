@@ -792,6 +792,11 @@ CAppInfoDisplay::ProcessWindowMessage(
             }
             break;
         }
+        case WM_SYSCOLORCHANGE:
+        {
+            RichEdit->SendMessageW(EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
+            break;
+        }
     }
 
     return FALSE;
@@ -1569,15 +1574,6 @@ CApplicationView::ProcessWindowMessage(
                         }
                     }
                     break;
-
-                    case NM_RCLICK:
-                    {
-                        if (((LPNMLISTVIEW)lParam)->iItem != -1)
-                        {
-                            ShowPopupMenuEx(m_hWnd, m_hWnd, 0, ID_INSTALL);
-                        }
-                    }
-                    break;
                 }
             }
             else if (pNotifyHeader->hwndFrom == m_Toolbar->GetWindow())
@@ -1596,7 +1592,7 @@ CApplicationView::ProcessWindowMessage(
         {
             /* Forward WM_SYSCOLORCHANGE to common controls */
             m_ListView->SendMessageW(WM_SYSCOLORCHANGE, wParam, lParam);
-            m_ListView->SendMessageW(EM_SETBKGNDCOLOR, 0, GetSysColor(COLOR_BTNFACE));
+            m_AppsInfo->SendMessageW(WM_SYSCOLORCHANGE, wParam, lParam);
             m_Toolbar->SendMessageW(WM_SYSCOLORCHANGE, wParam, lParam);
             m_ComboBox->SendMessageW(WM_SYSCOLORCHANGE, wParam, lParam);
         }
@@ -1611,6 +1607,30 @@ CApplicationView::ProcessWindowMessage(
         case WM_COMMAND:
         {
             OnCommand(wParam, lParam);
+        }
+        break;
+
+        case WM_CONTEXTMENU:
+        {
+            bool kbd = -1 == (int)(INT_PTR)lParam;
+            if ((HWND)wParam == m_ListView->m_hWnd)
+            {
+                int item = m_ListView->GetNextItem(-1, LVNI_FOCUSED | LVNI_SELECTED);
+                if (item != -1)
+                {
+                    POINT *ppt = NULL, pt;
+                    if (kbd)
+                    {
+                        RECT r;
+                        ListView_GetItemRect((HWND)wParam, item, &r, LVIR_LABEL);
+                        pt.x = r.left + (r.right - r.left) / 2;
+                        pt.y = r.top + (r.bottom - r.top) / 2;
+                        ::ClientToScreen((HWND)wParam, ppt = &pt);
+                    }
+                    ShowPopupMenuEx(m_hWnd, m_hWnd, 0, ID_INSTALL, ppt);
+                    return TRUE;
+                }
+            }
         }
         break;
     }
@@ -1978,6 +1998,41 @@ CApplicationView::AppendTabOrderWindow(int Direction, ATL::CSimpleArray<HWND> &T
     m_SearchBar->AppendTabOrderWindow(Direction, TabOrderList);
     m_ListView->AppendTabOrderWindow(Direction, TabOrderList);
     m_AppsInfo->AppendTabOrderWindow(Direction, TabOrderList);
+}
+
+VOID
+CApplicationView::GetRestoreListSelectionData(RESTORELISTSELECTION &Restore)
+{
+    LVITEMW &Item = Restore.Item;
+    Item.mask = LVIF_TEXT|LVIF_STATE;
+    Item.iItem = -1, Item.iSubItem = 0;
+    Item.stateMask = LVIS_FOCUSED|LVIS_SELECTED;
+    Item.pszText = Restore.Name, Item.cchTextMax = _countof(Restore.Name);
+
+    HWND hList = m_ListView ? m_ListView->m_hWnd : NULL;
+    if (hList)
+    {
+        Item.iItem = ListView_GetNextItem(hList, -1, LVNI_FOCUSED);
+        ListView_GetItem(hList, &Item);
+    }
+}
+
+VOID
+CApplicationView::RestoreListSelection(const RESTORELISTSELECTION &Restore)
+{
+    const LVITEMW &Item = Restore.Item;
+    int index = Item.iItem;
+    if (index != -1) // Was there a selected item?
+    {
+        LVFINDINFOW fi;
+        fi.flags = LVFI_STRING;
+        fi.psz = Item.pszText;
+        index = ListView_FindItem(m_ListView->m_hWnd, -1, &fi);
+    }
+    if (index != -1) // Is it still in the list?
+    {
+        ListView_SetItemState(m_ListView->m_hWnd, index, Item.state, Item.stateMask);
+    }
 }
 
 // this function is called when a item of listview get focus.
