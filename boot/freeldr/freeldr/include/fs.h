@@ -32,6 +32,7 @@ typedef struct tagDEVVTBL
 } DEVVTBL;
 
 #define MAX_FDS 60
+#define INVALID_FILE_ID ((ULONG)-1)
 
 ARC_STATUS ArcOpen(CHAR* Path, OPENMODE OpenMode, ULONG* FileId);
 ARC_STATUS ArcClose(ULONG FileId);
@@ -51,7 +52,11 @@ FsOpenFile(
 ULONG FsGetNumPathParts(PCSTR Path);
 VOID  FsGetFirstNameFromPath(PCHAR Buffer, PCSTR Path);
 
-VOID FsRegisterDevice(CHAR* Prefix, const DEVVTBL* FuncTable);
+VOID
+FsRegisterDevice(
+    _In_ PCSTR DeviceName,
+    _In_ const DEVVTBL* FuncTable);
+
 PCWSTR FsGetServiceName(ULONG FileId);
 VOID  FsSetDeviceSpecific(ULONG FileId, VOID* Specific);
 VOID* FsGetDeviceSpecific(ULONG FileId);

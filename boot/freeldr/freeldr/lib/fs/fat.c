@@ -668,7 +668,8 @@ BOOLEAN FatSearchDirectoryBufferForFile(PFAT_VOLUME_INFO Volume, PVOID Directory
         // See if the file name matches either the short or long name
         //
         if (((strlen(FileName) == strlen(LfnNameBuffer)) && (_stricmp(FileName, LfnNameBuffer) == 0)) ||
-            ((strlen(FileName) == strlen(ShortNameBuffer)) && (_stricmp(FileName, ShortNameBuffer) == 0)))        {
+            ((strlen(FileName) == strlen(ShortNameBuffer)) && (_stricmp(FileName, ShortNameBuffer) == 0)))
+        {
             //
             // We found the entry, now fill in the FAT_FILE_INFO struct
             //
@@ -702,7 +703,6 @@ BOOLEAN FatSearchDirectoryBufferForFile(PFAT_VOLUME_INFO Volume, PVOID Directory
         //
         RtlZeroMemory(ShortNameBuffer, 13 * sizeof(UCHAR));
         RtlZeroMemory(LfnNameBuffer, 261 * sizeof(UCHAR));
-        continue;
     }
 
     return FALSE;
@@ -1369,7 +1369,7 @@ BOOLEAN FatReadVolumeSectors(PFAT_VOLUME_INFO Volume, ULONG SectorNumber, ULONG 
     //
     // Seek to right position
     //
-    Position.QuadPart = (ULONGLONG)SectorNumber * 512;
+    Position.QuadPart = (ULONGLONG)SectorNumber * Volume->BytesPerSector;
     Status = ArcSeek(Volume->DeviceId, &Position, SeekAbsolute);
     if (Status != ESUCCESS)
     {
@@ -1380,8 +1380,8 @@ BOOLEAN FatReadVolumeSectors(PFAT_VOLUME_INFO Volume, ULONG SectorNumber, ULONG 
     //
     // Read data
     //
-    Status = ArcRead(Volume->DeviceId, Buffer, SectorCount * 512, &Count);
-    if (Status != ESUCCESS || Count != SectorCount * 512)
+    Status = ArcRead(Volume->DeviceId, Buffer, SectorCount * Volume->BytesPerSector, &Count);
+    if (Status != ESUCCESS || Count != SectorCount * Volume->BytesPerSector)
     {
         TRACE("FatReadVolumeSectors() Failed to read\n");
         return FALSE;

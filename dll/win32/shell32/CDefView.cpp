@@ -58,7 +58,7 @@ enum  {
 };
 #undef FCIDM_SHVIEWLAST // Don't use this constant, change DVIDM_CONTEXTMENU_LAST if you need a new id.
 
-typedef struct
+struct LISTVIEW_SORT_INFO
 {
     INT8    Direction;
     bool    bLoadedFromViewState;
@@ -72,7 +72,7 @@ typedef struct
         *(UINT*)this = 0;
         ListColumn = UNSPECIFIEDCOLUMN;
     }
-} LISTVIEW_SORT_INFO, *LPLISTVIEW_SORT_INFO;
+};
 
 #define SHV_CHANGE_NOTIFY   (WM_USER + 0x1111)
 #define SHV_UPDATESTATUSBAR (WM_USER + 0x1112)
@@ -210,6 +210,11 @@ static UINT CalculateCharWidth(HWND hwnd)
         ReleaseDC(hwnd, hDC);
     }
     return ret;
+}
+
+static inline COLORREF GetViewColor(COLORREF Clr, UINT SysFallback)
+{
+    return Clr != CLR_INVALID ? Clr : GetSysColor(SysFallback);
 }
 
 class CDefView :
@@ -592,8 +597,8 @@ CDefView::CDefView() :
     ZeroMemory(&m_FolderSettings, sizeof(m_FolderSettings));
     ZeroMemory(&m_ptLastMousePos, sizeof(m_ptLastMousePos));
     ZeroMemory(&m_Category, sizeof(m_Category));
-    m_viewinfo_data.clrText = GetSysColor(COLOR_WINDOWTEXT);
-    m_viewinfo_data.clrTextBack = GetSysColor(COLOR_WINDOW);
+    m_viewinfo_data.clrText = CLR_INVALID;
+    m_viewinfo_data.clrTextBack = CLR_INVALID;
     m_viewinfo_data.hbmBack = NULL;
 
     m_sortInfo.Reset();
@@ -934,18 +939,8 @@ void CDefView::UpdateListColors()
     }
     else
     {
-        // text background color
-        COLORREF clrTextBack = m_viewinfo_data.clrTextBack;
-        m_ListView.SetTextBkColor(clrTextBack);
-
-        // text color
-        COLORREF clrText;
-        if (m_viewinfo_data.clrText != CLR_INVALID)
-            clrText = m_viewinfo_data.clrText;
-        else
-            clrText = GetSysColor(COLOR_WINDOWTEXT);
-
-        m_ListView.SetTextColor(clrText);
+        m_ListView.SetTextBkColor(GetViewColor(m_viewinfo_data.clrTextBack, COLOR_WINDOW));
+        m_ListView.SetTextColor(GetViewColor(m_viewinfo_data.clrText, COLOR_WINDOWTEXT));
 
         // Background is painted by the parent via WM_PRINTCLIENT
         m_ListView.SetExtendedListViewStyle(LVS_EX_TRANSPARENTBKGND, LVS_EX_TRANSPARENTBKGND);
@@ -1663,7 +1658,7 @@ LRESULT CDefView::OnPrintClient(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL &b
     }
     else
     {
-        FillRect(hDC, &rc, GetSysColorBrush(COLOR_WINDOW));
+        SHFillRectClr(hDC, &rc, GetViewColor(m_viewinfo_data.clrTextBack, COLOR_WINDOW));
     }
 
     bHandled = TRUE;
@@ -1777,8 +1772,6 @@ LRESULT CDefView::OnCreate(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL &bHandl
 }
 
 // #### Handling of the menus ####
-
-extern "C" DWORD WINAPI SHMenuIndexFromID(HMENU hMenu, UINT uID);
 
 HRESULT CDefView::FillFileMenu()
 {
@@ -2052,7 +2045,7 @@ UINT CDefView::GetSelections()
 
     UINT i = 0;
     int lvIndex = -1;
-    while ((lvIndex = m_ListView.GetNextItem(lvIndex,  LVNI_SELECTED)) > -1)
+    while ((lvIndex = m_ListView.GetNextItem(lvIndex, LVNI_SELECTED)) > -1)
     {
         m_apidl[i] = _PidlByItem(lvIndex);
         i++;
@@ -2219,10 +2212,10 @@ LRESULT CDefView::OnContextMenu(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL &b
         if (hFocus == m_ListView.m_hWnd || m_ListView.IsChild(hFocus))
         {
             // Is there an item focused and selected?
-            lvIndex = m_ListView.GetNextItem(-1, LVIS_SELECTED|LVIS_FOCUSED);
+            lvIndex = m_ListView.GetNextItem(-1, LVNI_SELECTED | LVNI_FOCUSED);
             // If not, find the first selected item
             if (lvIndex < 0)
-                lvIndex = m_ListView.GetNextItem(-1, LVIS_SELECTED);
+                lvIndex = m_ListView.GetNextItem(-1, LVNI_SELECTED);
         }
 
         // We got something
