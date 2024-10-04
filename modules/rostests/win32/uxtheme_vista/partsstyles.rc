@@ -1,0 +1,2 @@
+#include <windows.h>
+#include <reactos/manifest_exe.rc>
