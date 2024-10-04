@@ -1,0 +1,4 @@
+add_executable(uxtheme_vista_partsstyles partsstyles.c partsstyles.rc)
+set_module_type(uxtheme_vista_partsstyles win32gui UNICODE)
+add_importlibs(uxtheme_vista_partsstyles msvcrt kernel32 user32 gdi32 uxtheme)
+add_rostests_file(TARGET uxtheme_vista_partsstyles)
