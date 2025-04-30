@@ -249,7 +249,7 @@ ViewTree_InsertAll(HWND hwndTreeView)
 static BOOL
 ViewTree_LoadTree(HKEY hKey, LPCWSTR pszKeyName, DWORD dwParentID)
 {
-    DWORD dwIndex;
+    DWORD dwIndex = ~0UL;
     WCHAR szKeyName[64], szText[MAX_PATH], *pch;
     DWORD Size, Value;
     PVIEWTREE_ENTRY pAllocated;
@@ -942,8 +942,11 @@ ViewDlg_Apply(HWND hwndDlg)
     // update user's settings
     SHGetSetSettings(&ShellState, dwMask, TRUE);
 
+    // invalidate cached restrictions
+    SHSettingsChanged(0, 0);
+
     // notify all
-    SendMessage(HWND_BROADCAST, WM_WININICHANGE, 0, 0);
+    SHSendMessageBroadcastW(WM_WININICHANGE, 0, 0);
 
     PostCabinetMessage(WM_COMMAND, FCIDM_DESKBROWSER_REFRESH, 0);
 }
@@ -975,9 +978,12 @@ FolderOptionsViewDlg(
                 case IDC_VIEW_RESET_ALL:
                 {
                     HRESULT hr = HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED);
+                    bool ResetToDefault = LOWORD(wParam) == IDC_VIEW_RESET_ALL;
                     CFolderOptions *pFO = (CFolderOptions*)GetWindowLongPtr(hwndDlg, GWL_USERDATA);
                     if (pFO)
-                        hr = pFO->ApplyDefFolderSettings(LOWORD(wParam) == IDC_VIEW_RESET_ALL);
+                        hr = pFO->ApplyDefFolderSettings(ResetToDefault); // Use IBrowserService2
+                    if (ResetToDefault && hr == HRESULT_FROM_WIN32(ERROR_NOT_SUPPORTED))
+                        hr = CFolderOptions::ResetGlobalAndDefViewFolderSettings(); // No browser
                     if (FAILED(hr))
                         SHELL_ErrorBox(hwndDlg, hr);
                     break;

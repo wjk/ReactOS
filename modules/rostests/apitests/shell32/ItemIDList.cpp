@@ -9,7 +9,11 @@
 #include "shelltest.h"
 #include <shellutils.h>
 
-enum { DIRBIT = 1, FILEBIT = 2 };
+enum { 
+    DIRBIT = 1, FILEBIT = 2,
+    PT_COMPUTER_REGITEM = 0x2E,
+    PT_INTERNET_URL     = 0x61,
+};
 
 static BYTE GetPIDLType(LPCITEMIDLIST pidl)
 {
@@ -43,6 +47,15 @@ static int FileStruct_Att(LPCITEMIDLIST pidl)
     C_ASSERT(FIELD_OFFSET(FS95, att) == 12);
     FS95 *p = FS95::Validate(pidl);
     return p ? p->att : (UINT(1) << 31);
+}
+
+static HRESULT GetDisplayNameOf(IShellFolder *pSF, LPCITEMIDLIST pidl, UINT Flags, PWSTR Buf, UINT Cap)
+{
+    STRRET sr;
+    HRESULT hr = pSF->GetDisplayNameOf(pidl, Flags, &sr);
+    if (SUCCEEDED(hr))
+        hr = StrRetToBufW(&sr, pidl, Buf, Cap);
+    return hr;
 }
 
 #define TEST_CLSID(pidl, type, offset, clsid) \
@@ -145,6 +158,12 @@ START_TEST(SHSimpleIDListFromPath)
         ok_long(item->mkid.abID[0] & 0x70, 0x20); // Something in My Computer
         ok_char(item->mkid.abID[1] | 32, 'x' | 32); // x:
     }
+
+    LPITEMIDLIST pidl;
+    ok_int((pidl = SHSimpleIDListFromPath(L"c:")) != NULL, TRUE);
+    ILFree(pidl);
+    ok_int((pidl = SHSimpleIDListFromPath(L"c:\\")) != NULL, TRUE);
+    ILFree(pidl);
 }
 
 START_TEST(ILCreateFromPath)
@@ -186,6 +205,7 @@ START_TEST(ILCreateFromPath)
 
 START_TEST(PIDL)
 {
+    CCoInit ComInit;
     LPITEMIDLIST pidl;
 
     pidl = SHCloneSpecialIDList(NULL, CSIDL_DRIVES, FALSE);
@@ -201,4 +221,82 @@ START_TEST(PIDL)
     else
         skip("?\n");
     ILFree(pidl);
+
+
+    CComPtr<IShellFolder> pInternet;
+    HRESULT hr = SHCoCreateInstance(NULL, &CLSID_Internet, NULL, IID_PPV_ARG(IShellFolder, &pInternet));
+    if (SUCCEEDED(hr))
+    {
+        PCWSTR pszUrl = L"http://example.com/page?query&foo=bar";
+        PIDLIST_RELATIVE pidlUrl;
+        hr = pInternet->ParseDisplayName(NULL, NULL, const_cast<PWSTR>(pszUrl), NULL, &pidlUrl, NULL);
+        ok_long(hr, S_OK);
+        if (hr == S_OK)
+        {
+            ok_int(pidlUrl->mkid.abID[0], PT_INTERNET_URL);
+            WCHAR buf[MAX_PATH];
+            hr = GetDisplayNameOf(pInternet, pidlUrl, SHGDN_FORPARSING, buf, _countof(buf));
+            ok_long(hr, S_OK);
+            if (SUCCEEDED(hr))
+            {
+                ok(!lstrcmpiW(buf, pszUrl), "FORPARSING must match URL\n");
+            }
+            ILFree(pidlUrl);
+        }
+    }
+}
+
+START_TEST(ILIsEqual)
+{
+    LPITEMIDLIST p1, p2, pidl;
+
+    p1 = p2 = NULL;
+    ok_int(ILIsEqual(p1, p2), TRUE);
+
+    ITEMIDLIST emptyitem = {}, emptyitem2 = {};
+    ok_int(ILIsEqual(&emptyitem, &emptyitem2), TRUE);
+
+    ok_int(ILIsEqual(NULL, &emptyitem), FALSE); // These two are not equal for some reason
+
+    p1 = SHCloneSpecialIDList(NULL, CSIDL_DRIVES, FALSE);
+    p2 = SHCloneSpecialIDList(NULL, CSIDL_DRIVES, FALSE);
+    if (p1 && p2)
+    {
+        ok_int(ILIsEqual(p1, p2), TRUE);
+        p1->mkid.abID[0] = PT_COMPUTER_REGITEM; // RegItem in wrong parent
+        ok_int(ILIsEqual(p1, p2), FALSE);
+    }
+    else
+    {
+        skip("Unable to initialize test\n");
+    }
+    ILFree(p1);
+    ILFree(p2);
+
+    // ILIsParent must compare like ILIsEqual
+    p1 = SHSimpleIDListFromPath(L"c:\\");
+    p2 = SHSimpleIDListFromPath(L"c:\\dir\\file");
+    if (p1 && p2)
+    {
+        ok_int(ILIsParent(NULL, p1, FALSE), FALSE); // NULL is always false
+        ok_int(ILIsParent(p1, NULL, FALSE), FALSE); // NULL is always false
+        ok_int(ILIsParent(NULL, NULL, FALSE), FALSE); // NULL is always false
+        ok_int(ILIsParent(p1, p1, FALSE), TRUE); // I'm my own parent
+        ok_int(ILIsParent(p1, p1, TRUE), FALSE); // Self is not immediate
+        ok_int(ILIsParent(p1, p2, FALSE), TRUE); // Grandchild
+        ok_int(ILIsParent(p1, p2, TRUE), FALSE); // Grandchild is not immediate
+        ok_ptr(ILFindChild(p1, p2), ILGetNext(ILGetNext(p2))); // Child is "dir\\file", skip MyComputer and C:
+        ok_int(ILIsEmpty(pidl = ILFindChild(p1, p1)) && pidl, TRUE); // Self
+        ILRemoveLastID(p2);
+        ok_int(ILIsParent(p1, p2, TRUE), TRUE); // Immediate child
+
+        p1->mkid.abID[0] = PT_COMPUTER_REGITEM; // RegItem in wrong parent
+        ok_int(ILIsParent(p1, p2, FALSE), FALSE);
+    }
+    else
+    {
+        skip("Unable to initialize test\n");
+    }
+    ILFree(p1);
+    ILFree(p2);
 }

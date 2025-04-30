@@ -50,7 +50,7 @@
 #define IDC_EVENTTEXTEDIT       1011
 #define IDC_DETAILS_STATIC      -2
 #define IDC_BYTESRADIO          1012
-#define IDC_WORDRADIO           1013
+#define IDC_WORDSRADIO          1013
 #define IDC_EVENTDATAEDIT       1014
 #define IDC_DISPLAYNAME         1015
 #define IDC_LOGNAME             1016
@@ -105,6 +105,8 @@
 #define IDS_CLEAREVENTS_MSG             110
 #define IDS_EVENTSTRINGIDNOTFOUND       111
 #define IDS_RESTOREDEFAULTS             112
+#define IDS_CONTFROMBEGINNING           113
+#define IDS_CONTFROMEND                 114
 
 #define IDS_USAGE                       120
 #define IDS_EVENTLOGFILE                121

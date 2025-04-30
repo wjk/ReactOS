@@ -908,7 +908,7 @@ ApplyParameterStringsToMessage(
 {
     /*
      * This code is heavily adapted from the MSDN example:
-     * https://msdn.microsoft.com/en-us/library/windows/desktop/bb427356.aspx
+     * https://learn.microsoft.com/en-us/windows/win32/eventlog/querying-for-event-source-messages
      * with bugs removed.
      */
 
@@ -1936,7 +1936,7 @@ FilterByString(IN PCWSTR FilterString, // This is a multi-string
         pStr = FilterString;
         while (*pStr)
         {
-            if (wcsicmp(pStr, String) == 0)
+            if (_wcsicmp(pStr, String) == 0)
             {
                 /* We have a match, break the loop */
                 break;
@@ -1997,10 +1997,12 @@ EnumEventsThread(IN LPVOID lpParameter)
     SYSTEMTIME time;
     LVITEMW lviEventItem;
 
+    /* Disable the Previous/Next buttons */
+    SendMessageW(hwndEventDetails, EVT_DISPLAY, FALSE, (LPARAM)-1);
+
     /* Save the current event log filter globally */
     EventLogFilter_AddRef(EventLogFilter);
     ActiveFilter = EventLogFilter;
-
 
     /** HACK!! **/
     EventLog = EventLogFilter->EventLogs[0];
@@ -2263,7 +2265,6 @@ Quit:
     /* All events loaded */
 
 Cleanup:
-
     ShowWindow(hwndStatusProgress, SW_HIDE);
     SendMessageW(hwndListView, LVM_PROGRESS, 0, FALSE);
 
@@ -2293,6 +2294,11 @@ Cleanup:
 
     /* Resume list view redraw */
     SendMessageW(hwndListView, WM_SETREDRAW, TRUE, 0);
+
+    /* Re-enable the Previous/Next buttons, keeping the current event details
+     * displayed, if any. Don't auto-select the first list item but wait for
+     * the user to do it. */
+    SendMessageW(hwndEventDetails, EVT_DISPLAY, FALSE, 0);
 
     EventLogFilter_Release(EventLogFilter);
 
@@ -2955,7 +2961,7 @@ BuildLogListAndFilterList(IN LPCWSTR lpComputerName)
         for (lpcName = 0; lpcName < ARRAYSIZE(SystemLogs); ++lpcName)
         {
             /* Check whether the log name is part of the system logs */
-            if (wcsicmp(LogName, SystemLogs[lpcName]) == 0)
+            if (_wcsicmp(LogName, SystemLogs[lpcName]) == 0)
             {
                 hRootNode = htiSystemLogs;
                 break;
@@ -2967,7 +2973,7 @@ BuildLogListAndFilterList(IN LPCWSTR lpComputerName)
                                 2, 3, (LPARAM)EventLogFilter);
 
         /* Try to get the default event log: "Application" */
-        if ((hItemDefault == NULL) && (wcsicmp(LogName, SystemLogs[0]) == 0))
+        if ((hItemDefault == NULL) && (_wcsicmp(LogName, SystemLogs[0]) == 0))
         {
             hItemDefault = hItem;
         }
@@ -3037,6 +3043,22 @@ InitInstance(HINSTANCE hInstance)
     HIMAGELIST hSmall;
     LVCOLUMNW lvc = {0};
     WCHAR szTemp[256];
+    INT iColumn;
+    static const struct
+    {
+        WORD width;
+        WORD uID;
+    } columnItems[] =
+    {
+        { 90, IDS_COLUMNTYPE },
+        { 70, IDS_COLUMNDATE },
+        { 70, IDS_COLUMNTIME },
+        { 150, IDS_COLUMNSOURCE },
+        { 100, IDS_COLUMNCATEGORY },
+        { 60, IDS_COLUMNEVENT },
+        { 120, IDS_COLUMNUSER },
+        { 100, IDS_COLUMNCOMPUTER },
+    };
 
     /* Create the main window */
     rs = Settings.wpPos.rcNormalPosition;
@@ -3180,69 +3202,13 @@ InitInstance(HINSTANCE hInstance)
 
     /* Now set up the listview with its columns */
     lvc.mask = LVCF_TEXT | LVCF_WIDTH;
-    lvc.cx = 90;
-    LoadStringW(hInstance,
-                IDS_COLUMNTYPE,
-                szTemp,
-                ARRAYSIZE(szTemp));
     lvc.pszText = szTemp;
-    ListView_InsertColumn(hwndListView, 0, &lvc);
-
-    lvc.cx = 70;
-    LoadStringW(hInstance,
-                IDS_COLUMNDATE,
-                szTemp,
-                ARRAYSIZE(szTemp));
-    lvc.pszText = szTemp;
-    ListView_InsertColumn(hwndListView, 1, &lvc);
-
-    lvc.cx = 70;
-    LoadStringW(hInstance,
-                IDS_COLUMNTIME,
-                szTemp,
-                ARRAYSIZE(szTemp));
-    lvc.pszText = szTemp;
-    ListView_InsertColumn(hwndListView, 2, &lvc);
-
-    lvc.cx = 150;
-    LoadStringW(hInstance,
-                IDS_COLUMNSOURCE,
-                szTemp,
-                ARRAYSIZE(szTemp));
-    lvc.pszText = szTemp;
-    ListView_InsertColumn(hwndListView, 3, &lvc);
-
-    lvc.cx = 100;
-    LoadStringW(hInstance,
-                IDS_COLUMNCATEGORY,
-                szTemp,
-                ARRAYSIZE(szTemp));
-    lvc.pszText = szTemp;
-    ListView_InsertColumn(hwndListView, 4, &lvc);
-
-    lvc.cx = 60;
-    LoadStringW(hInstance,
-                IDS_COLUMNEVENT,
-                szTemp,
-                ARRAYSIZE(szTemp));
-    lvc.pszText = szTemp;
-    ListView_InsertColumn(hwndListView, 5, &lvc);
-
-    lvc.cx = 120;
-    LoadStringW(hInstance,
-                IDS_COLUMNUSER,
-                szTemp,
-                ARRAYSIZE(szTemp));
-    lvc.pszText = szTemp;
-    ListView_InsertColumn(hwndListView, 6, &lvc);
-
-    lvc.cx = 100;
-    LoadStringW(hInstance,
-                IDS_COLUMNCOMPUTER,
-                szTemp,
-                ARRAYSIZE(szTemp));
-    lvc.pszText = szTemp;
-    ListView_InsertColumn(hwndListView, 7, &lvc);
+    for (iColumn = 0; iColumn < ARRAYSIZE(columnItems); ++iColumn)
+    {
+        lvc.cx = columnItems[iColumn].width;
+        LoadStringW(hInstance, columnItems[iColumn].uID, szTemp, ARRAYSIZE(szTemp));
+        ListView_InsertColumn(hwndListView, iColumn, &lvc);
+    }
 
     /* Initialize the save Dialog */
     ZeroMemory(&sfn, sizeof(sfn));
@@ -3378,7 +3344,7 @@ WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                                             MB_OK | MB_ICONERROR);
                                 break;
                             }
-                            SendMessageW(hwndEventDetails, EVT_DISPLAY, 0, (LPARAM)pnmv->iItem);
+                            SendMessageW(hwndEventDetails, EVT_DISPLAY, TRUE, (LPARAM)pnmv->iItem);
                         }
                         break;
                     }
@@ -4383,9 +4349,9 @@ EventDetails(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
             cxOld = rcWnd.right - rcWnd.left;
             cyOld = rcWnd.bottom - rcWnd.top;
 
-            /* Show event info in dialog control */
-            iEventItem = (lParam != 0 ? ((PEVENTDETAIL_INFO)lParam)->iEventItem : 0);
-            SendMessageW(hWndDetailsCtrl, EVT_DISPLAY, 0, (LPARAM)iEventItem);
+            /* Display the event info in the dialog */
+            iEventItem = (lParam != 0 ? ((PEVENTDETAIL_INFO)lParam)->iEventItem : -1);
+            SendMessageW(hWndDetailsCtrl, EVT_DISPLAY, TRUE, (LPARAM)iEventItem);
 
             // SetWindowPos(hWndDetailsCtrl, NULL,
                          // 0, 0,

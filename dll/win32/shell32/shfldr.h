@@ -23,6 +23,7 @@
 
 #ifndef _SHFLDR_H_
 #define _SHFLDR_H_
+#include <ntquery.h> // For PID_STG_*
 
 #define CHARS_IN_GUID 39
 
@@ -94,6 +95,26 @@ SHELL_GetDefaultFolderEnumSHCONTF();
 BOOL
 SHELL_IncludeItemInFolderEnum(IShellFolder *pSF, PCUITEMID_CHILD pidl, SFGAOF Query, SHCONTF Flags);
 
+static inline HRESULT
+MakeSCID(SHCOLUMNID &scid, REFCLSID fmtid, UINT pid)
+{
+    scid.fmtid = fmtid;
+    scid.pid = pid;
+    return S_OK;
+}
+
+HRESULT
+SHELL_MapSCIDToColumn(IShellFolder2 *pSF, const SHCOLUMNID *pscid);
+HRESULT
+SHELL_GetDetailsOfAsStringVariant(IShellFolder2 *pSF, PCUITEMID_CHILD pidl, UINT Column, VARIANT *pVar);
+HRESULT
+SHELL_GetDetailsOfColumnAsVariant(IShellFolder2 *pSF, PCUITEMID_CHILD pidl, UINT Column, VARTYPE vt, VARIANT *pVar);
+HRESULT
+SH32_GetDetailsOfPKeyAsVariant(IShellFolder2 *pSF, PCUITEMID_CHILD pidl, const SHCOLUMNID *pscid, VARIANT *pVar, BOOL UseFsColMap);
+
+HRESULT
+SHELL_CreateAbsolutePidl(IShellFolder *pSF, PCUIDLIST_RELATIVE pidlChild, PIDLIST_ABSOLUTE *ppPidl);
+
 HRESULT
 Shell_NextElement(
     _Inout_ LPWSTR *ppch,
@@ -126,8 +147,6 @@ HRESULT SHELL32_BindToSF (LPCITEMIDLIST pidlRoot, PERSIST_FOLDER_TARGET_INFO* pp
 extern "C"
 BOOL HCR_RegOpenClassIDKey(REFIID riid, HKEY *hkey);
 
-void AddFSClassKeysToArray(UINT cidl, PCUITEMID_CHILD_ARRAY apidl, HKEY* array, UINT* cKeys);
-
 HRESULT CDefViewBckgrndMenu_CreateInstance(IShellFolder* psf, REFIID riid, void **ppv);
 
 HRESULT SH_GetApidlFromDataObject(IDataObject *pDataObject, PIDLIST_ABSOLUTE* ppidlfolder, PUITEMID_CHILD **apidlItems, UINT *pcidl);
@@ -156,10 +175,30 @@ static __inline int SHELL32_GUIDToStringW (REFGUID guid, LPWSTR str)
 void SHELL_FS_ProcessDisplayFilename(LPWSTR szPath, DWORD dwFlags);
 BOOL SHELL_FS_HideExtension(LPCWSTR pwszPath);
 
+static inline BOOL IsIllegalFsFileName(PCWSTR Name)
+{
+    return StrIsNullOrEmpty(Name) || StrPBrkW(Name, INVALID_FILETITLE_CHARACTERSW);
+}
+
+void CloseRegKeyArray(HKEY* array, UINT cKeys);
 LSTATUS AddClassKeyToArray(const WCHAR* szClass, HKEY* array, UINT* cKeys);
 LSTATUS AddClsidKeyToArray(REFCLSID clsid, HKEY* array, UINT* cKeys);
+void AddFSClassKeysToArray(UINT cidl, PCUITEMID_CHILD_ARRAY apidl, HKEY* array, UINT* cKeys);
 
 #ifdef __cplusplus
+
+struct CRegKeyHandleArray
+{
+    HKEY hKeys[16];
+    UINT cKeys;
+
+    CRegKeyHandleArray() : cKeys(0) {}
+    ~CRegKeyHandleArray() { CloseRegKeyArray(hKeys, cKeys); }
+    operator HKEY*() { return hKeys; }
+    operator UINT*() { return &cKeys; }
+    operator UINT() { return cKeys; }
+    HKEY& operator [](SIZE_T i) { return hKeys[i]; }
+};
 
 HRESULT inline SHSetStrRet(LPSTRRET pStrRet, DWORD resId)
 {
