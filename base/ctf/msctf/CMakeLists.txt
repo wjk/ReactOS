@@ -5,28 +5,30 @@ add_definitions(-D_WIN32_WINNT=0x600)
 spec2def(msctf.dll msctf.spec ADD_IMPORTLIB)
 
 list(APPEND SOURCE
-    categorymgr.c
-    compartmentmgr.c
-    context.c
-    displayattributemgr.c
-    documentmgr.c
-    inputprocessor.c
-    langbarmgr.c
-    msctf.c
-    range.c
-    threadmgr.c
     precomp.h
-    ${CMAKE_CURRENT_BINARY_DIR}/msctf_stubs.c)
-
-list(APPEND PCH_SKIP_SOURCE
+    categorymgr.cpp
+    compartmentmgr.cpp
+    context.cpp
+    displayattributemgr.cpp
+    documentmgr.cpp
+    inputprocessor.cpp
+    langbarmgr.cpp
     mlng.cpp
-    utils.cpp)
+    msctf.cpp
+    range.cpp
+    threadmgr.cpp
+    utils.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/msctf_stubs.c)
 
 add_library(msctf MODULE
     ${SOURCE}
-    ${PCH_SKIP_SOURCE}
     version.rc
     ${CMAKE_CURRENT_BINARY_DIR}/msctf.def)
+
+if(MSVC)
+    # Disable C5286: implicit conversion from enum type 'x' to enum type 'y';
+    target_compile_options(msctf PRIVATE /wd5286)
+endif()
 
 set_module_type(msctf win32dll UNICODE)
 target_link_libraries(msctf uuid wine cicero)
