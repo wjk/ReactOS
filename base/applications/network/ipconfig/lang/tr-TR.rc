@@ -92,6 +92,8 @@ BEGIN
     IDS_DHCPRELEASED        "IP address for adapter %ls has already been released.\n"
     IDS_DHCPRELEASEERROR    "An error occurred while releasing interface %ls: "
     IDS_DHCPRENEWERROR      "An error occurred while renewing interface %ls: "
+    IDS_DHCPSETIDERROR      "Attempt to set the class id for adapter %ls failed: "
+    IDS_DHCPSETIDSUCCESS    "Successfully set the class id for adapter %ls.\n"
 END
 
 STRINGTABLE
@@ -136,4 +138,5 @@ setclassid için, bir sınıf kimliği belirtilmemişse sınıf kimliği silinmi
     > ipconfig /release *Bağ*    ... Eşleşen tüm bağlantıları bırakır.\n\
                                      Ör: ""Yerel Ağ Bağlantısı 1"" veya\n\
                                          ""Yerel Ağ Bağlantısı 2""\n"
+    IDS_CMDLINEERROR "\nError: unrecongnized or incomplete command line.\n"
 END

@@ -91,6 +91,8 @@ BEGIN
     IDS_DHCPRELEASED        "アダプタ %ls に対する IP アドレス はすでに解放されています。\n"
     IDS_DHCPRELEASEERROR    "インターフェース %ls の解放中にエラーが起きました: "
     IDS_DHCPRENEWERROR      "インターフェース %ls の更新中にエラーが起きました: "
+    IDS_DHCPSETIDERROR      "Attempt to set the class id for adapter %ls failed: "
+    IDS_DHCPSETIDSUCCESS    "Successfully set the class id for adapter %ls.\n"
 END
 
 STRINGTABLE
@@ -134,4 +136,5 @@ setclassid の場合、classid が指定されていなければ、classid は�
     > ipconfig /release *Con*    ... すべてのマッチする接続を解放します。\n\
                                      例 ""Local Area Connection 1"" または\n\
                                         ""Local Area Connection 2""\n"
+    IDS_CMDLINEERROR "\nError: unrecongnized or incomplete command line.\n"
 END

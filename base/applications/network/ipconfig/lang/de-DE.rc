@@ -93,6 +93,8 @@ BEGIN
     IDS_DHCPRELEASED        "Die IP-Adresse für den Adapter %ls wurde bereits freigegeben.\n"
     IDS_DHCPRELEASEERROR    "Beim Freigeben der Schnittstelle %ls ist folgender Fehler aufgetreten: "
     IDS_DHCPRENEWERROR      "Beim Aktualisieren der Schnittstelle %ls ist folgender Fehler aufgetreten: "
+    IDS_DHCPSETIDERROR      "Fehler beim Festlegen der Klassenkennung für Adapter %ls: "
+    IDS_DHCPSETIDSUCCESS    "Klassenkennung für Adapter %ls festgelegt."
 END
 
 STRINGTABLE
@@ -139,4 +141,5 @@ Beispiele:\n\
     > ipconfig /release *Ver*    ... Gibt alle passenden Verbindungen frei,\n\
                                      z.B. ""Lokale Verbindung 1""\n\
                                      oder ""Lokale Verbindung 2""\n"
+    IDS_CMDLINEERROR "\nFehler: Nicht erkannte oder unvollständige Befehlszeile.\n"
 END

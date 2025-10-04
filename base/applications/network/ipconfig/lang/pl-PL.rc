@@ -70,6 +70,8 @@ BEGIN
     IDS_DHCPRELEASED        "IP address for adapter %ls has already been released.\n"
     IDS_DHCPRELEASEERROR    "An error occurred while releasing interface %ls: "
     IDS_DHCPRENEWERROR      "An error occurred while renewing interface %ls: "
+    IDS_DHCPSETIDERROR      "Attempt to set the class id for adapter %ls failed: "
+    IDS_DHCPSETIDSUCCESS    "Successfully set the class id for adapter %ls.\n"
 END
 
 STRINGTABLE
@@ -142,4 +144,5 @@ Przykłady:\n\
     > ipconfig /release *Poł*    ... Zwalnia wszystkie pasujące połączenia,\n\
                                      np. ""Połączenie lokalne 1""\n\
                                      lub ""Połączenie lokalne 2""\n"
+    IDS_CMDLINEERROR "\nError: unrecongnized or incomplete command line.\n"
 END

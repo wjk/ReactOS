@@ -2920,6 +2920,106 @@ static void Test_structs_seh_nested(void)
 
 #endif // _M_IX86
 
+void Test_collided_unwind(void)
+{
+    volatile int Flags = 0;
+    volatile int Count = 0;
+    jmp_buf JumpBuffer;
+    int ret;
+#ifdef _M_IX86
+    unsigned int Registration = __readfsdword(0);
+#endif
+
+    ret = setjmp(JumpBuffer);
+    if (ret == 0)
+    {
+        _SEH2_TRY
+        {
+            _SEH2_TRY
+            {
+                _SEH2_TRY
+                {
+                    Flags |= 1;
+                    *((volatile int*)(LONG_PTR)-1) = 123;
+                }
+                _SEH2_FINALLY
+                {
+                    Count++;
+                    Flags |= 2;
+                    if (Count) // This is to prevent the compiler from optimizing stuff out
+                        longjmp(JumpBuffer, 1);
+                    Flags |= 4;
+                }
+                _SEH2_END;
+            }
+            _SEH2_FINALLY
+            {
+                Count++;
+                Flags |= 8;
+            }
+            _SEH2_END;
+        }
+        _SEH2_EXCEPT(EXCEPTION_EXECUTE_HANDLER)
+        {
+            Flags |= 16;
+        }
+        _SEH2_END;
+    }
+
+    ok(Flags == (1 | 2 | 8), "Flags = %x\n", Flags);
+    ok(Count == 2, "Count = %d\n", Count);
+#ifdef _M_IX86
+    ok(__readfsdword(0) == Registration, "SEH registration corrupted!\n");
+    *(unsigned int*)NtCurrentTeb() = Registration;
+#endif
+}
+
+void Do_nested_from_except(void)
+{
+    volatile unsigned int Flags = 0;
+
+    _SEH2_TRY
+    {
+        RaiseException(0xDEADBEEF, 0, 0, NULL);
+    }
+    _SEH2_EXCEPT(EXCEPTION_EXECUTE_HANDLER)
+    {
+        _SEH2_TRY
+        {
+            _SEH2_TRY
+            {
+                Flags |= 1;
+            }
+            _SEH2_EXCEPT(EXCEPTION_EXECUTE_HANDLER)
+            {
+                Flags |= 2;
+            }
+            _SEH2_END;
+        }
+        _SEH2_FINALLY
+        {
+            Flags |= 4;
+        }
+        _SEH2_END;
+    }
+    _SEH2_END;
+
+    ok(Flags == (1 | 4), "Flags = %x\n", Flags);
+}
+
+void Test_nested_from_except(void)
+{
+    Do_nested_from_except();
+
+#ifdef _M_IX86
+    /* Temporarily remove the SEH registration (see CORE-20316) */
+    unsigned int Registration = __readfsdword(0);
+    *(unsigned int*)NtCurrentTeb() = -1;
+    Do_nested_from_except();
+    *(unsigned int*)NtCurrentTeb() = Registration;
+#endif
+}
+
 START_TEST(pseh)
 {
 #ifdef _M_IX86
@@ -2928,6 +3028,8 @@ START_TEST(pseh)
     Test_structs_seh_finally();
     Test_structs_seh_nested();
 #endif
+    Test_collided_unwind();
+    Test_nested_from_except();
 
 	const struct subtest testsuite[] =
 	{

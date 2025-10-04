@@ -125,6 +125,7 @@ list(APPEND SOURCE
     RtlQueryTimeZoneInfo.c
     RtlReAllocateHeap.c
     RtlRemovePrivileges.c
+    RtlUnhandledExceptionFilter.c
     RtlUnicodeStringToAnsiString.c
     RtlUnicodeStringToCountedOemString.c
     RtlUnicodeToOemN.c
@@ -139,9 +140,15 @@ list(APPEND SOURCE
     precomp.h)
 
 if(ARCH STREQUAL "i386")
-    add_asm_files(ntdll_apitest_asm i386/NtContinue.S)
+    add_asm_files(ntdll_apitest_asm
+        ../crt/i386/setjmp_helper.s
+        i386/NtContinue.S
+    )
 elseif(ARCH STREQUAL "amd64")
-    add_asm_files(ntdll_apitest_asm amd64/NtContinue.S)
+    add_asm_files(ntdll_apitest_asm
+        ../crt/amd64/setjmp_helper.s
+        amd64/NtContinue.S
+    )
 endif()
 
 list(APPEND PCH_SKIP_SOURCE
