@@ -66,13 +66,22 @@ typedef enum _OPENMODE
     OpenWriteOnly,
     OpenReadWrite,
     CreateWriteOnly,
-    CreateReadOnly,
+    CreateReadWrite,
     SupersedeWriteOnly,
-    SupersedeReadOnly,
     SupersedeReadWrite,
     OpenDirectory,
     CreateDirectory,
 } OPENMODE;
+
+typedef enum _FILEATTRIBUTES
+{
+    ReadOnlyFile = 0x01,
+    HiddenFile = 0x02,
+    SystemFile = 0x04,
+    ArchiveFile = 0x08,
+    DirectoryFile = 0x10,
+    DeleteFile = 0x20
+} FILEATTRIBUTES;
 
 typedef enum _IDENTIFIER_FLAG
 {
@@ -217,16 +226,15 @@ typedef struct _MEMORY_DESCRIPTOR
     PFN_NUMBER PageCount;
 } MEMORY_DESCRIPTOR, *PMEMORY_DESCRIPTOR;
 
-typedef int CONFIGTYPE;
-typedef struct tagFILEINFORMATION
+typedef struct _FILEINFORMATION
 {
     LARGE_INTEGER StartingAddress;
     LARGE_INTEGER EndingAddress;
     LARGE_INTEGER CurrentAddress;
-    CONFIGTYPE Type;
+    CONFIGURATION_TYPE Type;
     ULONG FileNameLength;
     UCHAR Attributes;
-    CHAR Filename[32];
+    CHAR FileName[32];
 } FILEINFORMATION;
 
 typedef
