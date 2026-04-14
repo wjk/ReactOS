@@ -75,9 +75,6 @@ struct LISTVIEW_SORT_INFO
     }
 };
 
-#define SHV_CHANGE_NOTIFY   (WM_USER + 0x1111)
-#define SHV_UPDATESTATUSBAR (WM_USER + 0x1112)
-
 // For the context menu of the def view, the id of the items are based on 1 because we need
 // to call TrackPopupMenu and let it use the 0 value as an indication that the menu was canceled
 #define CONTEXT_MENU_BASE_ID 1
@@ -339,8 +336,8 @@ public:
     BOOLEAN LV_RenameItem(PCUITEMID_CHILD pidlOld, PCUITEMID_CHILD pidlNew);
     BOOL LV_UpdateItem(INT nItem, PCUITEMID_CHILD pidl);
     BOOL LV_UpdateItem(PCUITEMID_CHILD pidl);
-    void LV_RefreshIcon(INT iItem);
-    void LV_RefreshIcons();
+    void LV_RefreshItem(INT iItem);
+    void LV_RefreshItems();
     static INT CALLBACK fill_list(LPVOID ptr, LPVOID arg);
     HRESULT FillList(BOOL IsRefreshCommand = TRUE);
     HRESULT FillFileMenu();
@@ -1496,7 +1493,7 @@ BOOL CDefView::LV_UpdateItem(PCUITEMID_CHILD pidl)
     return nItem >= 0 ? LV_UpdateItem(nItem, pidl) : FALSE;
 }
 
-void CDefView::LV_RefreshIcon(INT iItem)
+void CDefView::LV_RefreshItem(INT iItem)
 {
     ASSERT(m_ListView);
 
@@ -1504,10 +1501,11 @@ void CDefView::LV_RefreshIcon(INT iItem)
     lvItem.iItem = iItem;
     lvItem.iImage = I_IMAGECALLBACK;
     m_ListView.SetItem(&lvItem);
+    for (UINT iCol = 0; m_ListView.SetItemText(iItem, iCol, LPSTR_TEXTCALLBACK); ++iCol) {}
     m_ListView.Update(iItem);
 }
 
-void CDefView::LV_RefreshIcons()
+void CDefView::LV_RefreshItems()
 {
     ASSERT(m_ListView);
 
@@ -1517,7 +1515,7 @@ void CDefView::LV_RefreshIcons()
         if (iItem == -1)
             break;
 
-        LV_RefreshIcon(iItem);
+        LV_RefreshItem(iItem);
     }
 }
 
@@ -3006,7 +3004,7 @@ LRESULT CDefView::OnChangeNotify(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL &
         case SHCNE_MEDIAINSERTED:
         case SHCNE_MEDIAREMOVED:
         case SHCNE_ASSOCCHANGED:
-            LV_RefreshIcons();
+            LV_RefreshItems();
             break;
         case SHCNE_UPDATEDIR:
         case SHCNE_ATTRIBUTES:

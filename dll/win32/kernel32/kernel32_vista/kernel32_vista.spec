@@ -56,6 +56,11 @@
 @ stdcall RegisterApplicationRestart(wstr long)
 @ stdcall SetFileBandwidthReservation(ptr long long long ptr ptr)
 @ stdcall SetThreadPreferredUILanguages(long wstr ptr)
+@ stdcall CompareStringOrdinal(ptr long ptr long long)
 
 @ stdcall GetNamedPipeClientProcessId(ptr ptr)
+@ stdcall GetThreadDescription(ptr ptr) # Win 10
 @ stdcall SetThreadDescription(ptr wstr) # Win 10
+@ stdcall GetSystemTimePreciseAsFileTime(ptr) kernel32.GetSystemTimeAsFileTime
+@ stdcall TrySubmitThreadpoolCallback(ptr ptr ptr)
+@ stdcall FreeLibraryWhenCallbackReturns(ptr ptr) ntdll_vista.TpCallbackUnloadDllOnCompletion

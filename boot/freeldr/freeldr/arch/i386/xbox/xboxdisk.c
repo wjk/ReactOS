@@ -20,37 +20,50 @@ static PDEVICE_UNIT HardDrive = NULL;
 static PDEVICE_UNIT CdDrive = NULL;
 static BOOLEAN AtaInitialized = FALSE;
 
+/* DISK IO ERROR SUPPORT *****************************************************/
+
+/* For disk.c!DiskError() */
+PCSTR
+DiskGetErrorCodeString(
+    _In_ ULONG ErrorCode)
+{
+#if 0 // TODO: ATA/IDE error code descriptions.
+    switch (ErrorCode)
+    {
+    default: return "Unknown error code";
+    }
+#endif
+    return NULL;
+}
+
 /* FUNCTIONS ******************************************************************/
 
 static
 VOID
 XboxDiskInit(VOID)
 {
-    UCHAR DetectedCount;
-    UCHAR UnitNumber;
-    PDEVICE_UNIT DeviceUnit = NULL;
+    UCHAR DetectedCount, UnitNumber;
 
     ASSERT(!AtaInitialized);
-
     AtaInitialized = TRUE;
 
     /* Find first HDD and CD */
     AtaInit(&DetectedCount);
-    for (UnitNumber = 0; UnitNumber <= DetectedCount; UnitNumber++)
+    for (UnitNumber = 0; UnitNumber < DetectedCount; UnitNumber++)
     {
-        DeviceUnit = AtaGetDevice(UnitNumber);
-        if (DeviceUnit)
+        PDEVICE_UNIT DeviceUnit = AtaGetDevice(UnitNumber);
+        if (!DeviceUnit)
+            continue;
+
+        if (DeviceUnit->Flags & ATA_DEVICE_ATAPI)
         {
-            if (DeviceUnit->Flags & ATA_DEVICE_ATAPI)
-            {
-                if (!CdDrive)
-                    CdDrive = DeviceUnit;
-            }
-            else
-            {
-                if (!HardDrive)
-                    HardDrive = DeviceUnit;
-            }
+            if (!CdDrive)
+                CdDrive = DeviceUnit;
+        }
+        else
+        {
+            if (!HardDrive)
+                HardDrive = DeviceUnit;
         }
     }
 }
@@ -77,6 +90,13 @@ XboxDiskDriveNumberToDeviceUnit(UCHAR DriveNumber)
     return NULL;
 }
 
+BOOLEAN DiskResetController(UCHAR DriveNumber)
+{
+    WARN("DiskResetController(0x%x) DISK OPERATION FAILED -- RESETTING CONTROLLER\n", DriveNumber);
+    /* No-op on XBOX */
+    return TRUE;
+}
+
 CONFIGURATION_TYPE
 DiskGetConfigType(
     _In_ UCHAR DriveNumber)
@@ -93,6 +113,12 @@ DiskGetConfigType(
         return DiskPeripheral;
 }
 
+// FIXME: Dummy for entry.S/linux.S
+VOID __cdecl DiskStopFloppyMotor(VOID)
+{
+    /* No-op on XBOX */
+}
+
 BOOLEAN
 XboxDiskReadLogicalSectors(
     IN UCHAR DriveNumber,
@@ -101,6 +127,7 @@ XboxDiskReadLogicalSectors(
     OUT PVOID Buffer)
 {
     PDEVICE_UNIT DeviceUnit;
+    BOOLEAN Success;
 
     TRACE("XboxDiskReadLogicalSectors() DriveNumber: 0x%x SectorNumber: %I64u SectorCount: %u Buffer: 0x%x\n",
           DriveNumber, SectorNumber, SectorCount, Buffer);
@@ -109,7 +136,10 @@ XboxDiskReadLogicalSectors(
     if (!DeviceUnit)
         return FALSE;
 
-    return AtaReadLogicalSectors(DeviceUnit, SectorNumber, SectorCount, Buffer);
+    Success = AtaReadLogicalSectors(DeviceUnit, SectorNumber, SectorCount, Buffer);
+    if (!Success)
+        DiskError("Disk Read Failed", -1);
+    return Success;
 }
 
 BOOLEAN

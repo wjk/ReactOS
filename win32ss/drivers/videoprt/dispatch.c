@@ -388,7 +388,7 @@ IntVideoPortDispatchOpen(
         Status = IntInitializeInt10();
         if (!NT_SUCCESS(Status))
         {
-            ERR_(VIDEOPRT, "IntInitializeInt10() failed: 0x%lx\n", Status);
+            ERR_(VIDEOPRT, "IntInitializeInt10(CSR) failed: 0x%lx\n", Status);
             ObDereferenceObject(CsrProcess);
             CsrProcess = NULL;
             return Status;
@@ -998,7 +998,7 @@ IntVideoPortQueryBusRelations(PDEVICE_OBJECT DeviceObject, PIRP Irp)
     if (InterlockedCompareExchange((PLONG)&DeviceExtension->DeviceOpened, 0, 0) == 0)
     {
         /* Device not opened. Don't enumerate children yet */
-        WARN_(VIDEOPRT, "Skipping child enumeration because device is not opened");
+        WARN_(VIDEOPRT, "Skipping child enumeration because device is not opened\n");
         return STATUS_INSUFFICIENT_RESOURCES;
     }
     /* Query children of the device. */
@@ -1105,18 +1105,64 @@ IntVideoPortDispatchFdoPnp(
             break;
 
         case IRP_MN_QUERY_DEVICE_RELATIONS:
-            if (IrpSp->Parameters.QueryDeviceRelations.Type != BusRelations)
+        {
+            DEVICE_RELATION_TYPE RelationType = IrpSp->Parameters.QueryDeviceRelations.Type;
+
+            switch (RelationType)
             {
-                IoSkipCurrentIrpStackLocation(Irp);
-                Status = IoCallDriver(DeviceExtension->NextDeviceObject, Irp);
-            }
-            else
-            {
-                Status = IntVideoPortQueryBusRelations(DeviceObject, Irp);
-                Irp->IoStatus.Status = Status;
-                IoCompleteRequest(Irp, IO_NO_INCREMENT);
+                case TargetDeviceRelation:
+                {
+                    PDEVICE_RELATIONS TargetList;
+
+                    TargetList = ExAllocatePoolZero(PagedPool, sizeof(*TargetList), TAG_VIDEO_PORT);
+                    if (TargetList == NULL)
+                    {
+                        Status = STATUS_INSUFFICIENT_RESOURCES;
+                        Irp->IoStatus.Information = 0;
+                    }
+                    else
+                    {
+                        TargetList->Count++;
+                        TargetList->Objects[0] = DeviceObject;
+                        ObReferenceObject(DeviceObject);
+                        Irp->IoStatus.Information = (ULONG_PTR)TargetList;
+                        Status = STATUS_SUCCESS;
+                    }
+
+                    Irp->IoStatus.Status = Status;
+                    IoCompleteRequest(Irp, IO_NO_INCREMENT);
+                    break;
+                }
+
+                case BusRelations:
+                    Status = IntVideoPortQueryBusRelations(DeviceObject, Irp);
+                    Irp->IoStatus.Status = Status;
+                    if (!NT_SUCCESS(Status))
+                    {
+                        IoCompleteRequest(Irp, IO_NO_INCREMENT);
+                    }
+                    else if (DeviceExtension->NextDeviceObject != NULL)
+                    {
+                        IoSkipCurrentIrpStackLocation(Irp);
+                        Status = IoCallDriver(DeviceExtension->NextDeviceObject, Irp);
+                    }
+                    break;
+
+                default:
+                    if (DeviceExtension->NextDeviceObject != NULL)
+                    {
+                        IoSkipCurrentIrpStackLocation(Irp);
+                        Status = IoCallDriver(DeviceExtension->NextDeviceObject, Irp);
+                    }
+                    else
+                    {
+                        Status = Irp->IoStatus.Status;
+                        IoCompleteRequest(Irp, IO_NO_INCREMENT);
+                    }
+                    break;
             }
             break;
+        }
 
         case IRP_MN_REMOVE_DEVICE:
         case IRP_MN_QUERY_REMOVE_DEVICE:
