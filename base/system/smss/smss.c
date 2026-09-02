@@ -19,9 +19,12 @@
 
 UNICODE_STRING SmpSystemRoot;
 ULONG AttachedSessionId = -1;
-BOOLEAN SmpDebug, SmpEnableDots;
+BOOLEAN SmpDebug;
 HANDLE SmApiPort;
 HANDLE SmpInitialCommandProcessId;
+
+#define DEFAULT_SUBSYSTEM_DESC          L"Windows SubSystem"
+#define DEFAULT_INITIAL_COMMAND_DESC    L"Windows Logon Process"
 
 /* FUNCTIONS ******************************************************************/
 
@@ -157,9 +160,6 @@ SmpInvokeAutoChk(IN PUNICODE_STRING FileName,
     WCHAR Buffer[1024];
     BOOLEAN BootState, BootOkay, ShutdownOkay;
 
-    /* Check if autochk should show dots (if the user booted with /SOS) */
-    if (SmpQueryRegistrySosOption()) SmpEnableDots = FALSE;
-
     /* Make sure autochk was actually found */
     if (Flags & SMP_INVALID_PATH)
     {
@@ -227,7 +227,7 @@ SmpExecuteCommand(IN PUNICODE_STRING CommandLine,
     if (!NT_SUCCESS(Status))
     {
         /* Fail if we couldn't do that */
-        DPRINT1("SMSS: SmpParseCommandLine( %wZ ) failed - Status == %lx\n",
+        DPRINT1("SMSS: SmpParseCommandLine(%wZ) failed - Status == %lx\n",
                 CommandLine, Status);
         return Status;
     }
@@ -319,7 +319,7 @@ SmpExecuteInitialCommand(IN ULONG MuSessionId,
     /* And fail if any other reason is also true */
     if (!NT_SUCCESS(Status))
     {
-        DPRINT1("SMSS: SmpParseCommandLine( %wZ ) failed - Status == %lx\n",
+        DPRINT1("SMSS: SmpParseCommandLine(%wZ) failed - Status == %lx\n",
                 InitialCommand, Status);
         return Status;
     }
@@ -402,23 +402,42 @@ SmpTerminate(IN PULONG_PTR Parameters,
 LONG
 SmpUnhandledExceptionFilter(IN PEXCEPTION_POINTERS ExceptionInfo)
 {
+    PEXCEPTION_RECORD ExceptionRecord = ExceptionInfo->ExceptionRecord;
     ULONG_PTR Parameters[4];
     UNICODE_STRING ErrorString;
 
-    /* Print and breakpoint into the debugger */
+#if DBG
+    /* Print the message and break into the debugger */
     DbgPrint("SMSS: Unhandled exception - Status == %x  IP == %p\n",
-             ExceptionInfo->ExceptionRecord->ExceptionCode,
-             ExceptionInfo->ExceptionRecord->ExceptionAddress);
-    DbgPrint("      Memory Address: %x  Read/Write: %x\n",
-             ExceptionInfo->ExceptionRecord->ExceptionInformation[0],
-             ExceptionInfo->ExceptionRecord->ExceptionInformation[1]);
-    DbgBreakPoint();
+             ExceptionRecord->ExceptionCode,
+             ExceptionRecord->ExceptionAddress);
+    if ((ExceptionRecord->ExceptionCode == STATUS_IN_PAGE_ERROR) &&
+        (ExceptionRecord->NumberParameters >= 3))
+    {
+        DbgPrint("      Memory Address: %x  Read/Write: %x  I/O Error: %x\n",
+                 ExceptionRecord->ExceptionInformation[1],
+                 ExceptionRecord->ExceptionInformation[0],
+                 ExceptionRecord->ExceptionInformation[2]);
+    }
+    else
+    if ((ExceptionRecord->ExceptionCode == STATUS_ACCESS_VIOLATION ||
+         ExceptionRecord->ExceptionCode == STATUS_GUARD_PAGE_VIOLATION ||
+         ExceptionRecord->ExceptionCode == STATUS_STACK_OVERFLOW ||
+         ExceptionRecord->ExceptionCode == STATUS_IN_PAGE_ERROR) &&
+        (ExceptionRecord->NumberParameters >= 2))
+    {
+        DbgPrint("      Memory Address: %x  Read/Write: %x\n",
+                 ExceptionRecord->ExceptionInformation[1],
+                 ExceptionRecord->ExceptionInformation[0]);
+    }
+    if (NtCurrentPeb()->BeingDebugged) DbgBreakPoint();
+#endif
 
     /* Build the hard error and terminate */
     RtlInitUnicodeString(&ErrorString, L"Unhandled Exception in Session Manager");
     Parameters[0] = (ULONG_PTR)&ErrorString;
-    Parameters[1] = ExceptionInfo->ExceptionRecord->ExceptionCode;
-    Parameters[2] = (ULONG_PTR)ExceptionInfo->ExceptionRecord->ExceptionAddress;
+    Parameters[1] = ExceptionRecord->ExceptionCode;
+    Parameters[2] = (ULONG_PTR)ExceptionRecord->ExceptionAddress;
     Parameters[3] = (ULONG_PTR)ExceptionInfo->ContextRecord;
     SmpTerminate(Parameters, 1, RTL_NUMBER_OF(Parameters));
 
@@ -514,7 +533,7 @@ _main(IN INT argc,
         }
         SmpReleasePrivilege(State);
 
-        /* Wait on either CSRSS or Winlogon to die */
+        /* Wait on either CSRSS or the initial command to die */
         Status = NtWaitForMultipleObjects(RTL_NUMBER_OF(Handles),
                                           Handles,
                                           WaitAny,
@@ -522,22 +541,23 @@ _main(IN INT argc,
                                           NULL);
         if (Status == STATUS_WAIT_0)
         {
-            /* CSRSS is dead, get exit code and prepare for the hard error */
-            RtlInitUnicodeString(&DbgString, L"Windows SubSystem");
+            /* CSRSS is dead, get its exit code */
+            RtlInitUnicodeString(&DbgString, DEFAULT_SUBSYSTEM_DESC);
             Status = NtQueryInformationProcess(Handles[0],
                                                ProcessBasicInformation,
                                                &ProcessInfo,
                                                sizeof(ProcessInfo),
                                                NULL);
-            DPRINT1("SMSS: Windows subsystem terminated when it wasn't supposed to.\n");
+            DPRINT1("SMSS: %S terminated when it wasn't supposed to.\n",
+                    DEFAULT_SUBSYSTEM_DESC);
         }
         else
         {
             /* The initial command is dead or we have another failure */
-            RtlInitUnicodeString(&DbgString, L"Windows Logon Process");
+            RtlInitUnicodeString(&DbgString, DEFAULT_INITIAL_COMMAND_DESC);
             if (Status == STATUS_WAIT_1)
             {
-                /* Winlogon.exe got terminated, get its exit code */
+                /* The initial command got terminated, get its exit code */
                 Status = NtQueryInformationProcess(Handles[1],
                                                    ProcessBasicInformation,
                                                    &ProcessInfo,

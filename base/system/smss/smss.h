@@ -157,8 +157,7 @@ SmpInit(
 ULONG
 NTAPI
 SmpApiLoop(
-    IN PVOID Parameter
-);
+    _In_ PVOID Parameter);
 
 /* smsbapi.c */
 
@@ -307,12 +306,6 @@ SmpParseCommandLine(
     OUT PUNICODE_STRING FileName,
     OUT PUNICODE_STRING Directory,
     OUT PUNICODE_STRING Arguments
-);
-
-BOOLEAN
-NTAPI
-SmpQueryRegistrySosOption(
-    VOID
 );
 
 BOOLEAN

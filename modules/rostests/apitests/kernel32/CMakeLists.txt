@@ -9,6 +9,7 @@ list(APPEND SOURCE
     DefaultActCtx.c
     DeviceIoControl.c
     dosdev.c
+    EnumSystemCodePages.c
     FindActCtxSectionStringW.c
     FindFiles.c
     FLS.c
@@ -17,6 +18,7 @@ list(APPEND SOURCE
     GetCPInfo.c
     GetCurrentDirectory.c
     GetDriveType.c
+    GetEnvironmentVariable.c
     GetFinalPathNameByHandle.c
     GetLocaleInfo.c
     GetModuleFileName.c
@@ -25,6 +27,7 @@ list(APPEND SOURCE
     interlck.c
     IsDBCSLeadByteEx.c
     JapaneseCalendar.c
+    JobObject.c
     LCMapString.c
     LoadLibraryExW.c
     LocaleNameToLCID.c
@@ -35,6 +38,7 @@ list(APPEND SOURCE
     Pipes.c
     PrivMoveFileIdentityW.c
     QueueUserAPC.c
+    ReadFile.c
     SetComputerNameExW.c
     SetConsoleWindowInfo.c
     SetCurrentDirectory.c
@@ -43,7 +47,9 @@ list(APPEND SOURCE
     TerminateProcess.c
     TunnelCache.c
     UEFIFirmware.c
-    WideCharToMultiByte.c)
+    WideCharToMultiByte.c
+    WriteFile.c
+)
 
 list(APPEND PCH_SKIP_SOURCE
     testlist.c)

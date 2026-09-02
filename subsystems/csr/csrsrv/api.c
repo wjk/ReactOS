@@ -3,7 +3,7 @@
  * PROJECT:         ReactOS Client/Server Runtime SubSystem
  * FILE:            subsystems/win32/csrsrv/api.c
  * PURPOSE:         CSR Server DLL API LPC Implementation
- *                  "\Windows\ApiPort" port process management functions
+ *                  "\ApiPort" port process management functions
  * PROGRAMMERS:     Alex Ionescu (alex@relsoft.net)
  */
 
@@ -275,7 +275,7 @@ CsrpCheckRequestThreads(VOID)
                                          0,
                                          0,
                                          0,
-                                         (PVOID)CsrApiRequestThread,
+                                         CsrApiRequestThread,
                                          NULL,
                                          &hThread,
                                          &ClientId);
@@ -316,24 +316,25 @@ CsrpCheckRequestThreads(VOID)
     return STATUS_SUCCESS;
 }
 
-/*++
- * @name CsrApiRequestThread
+/**
+ * @brief
+ * The CsrApiRequestThread routine handles incoming messages
+ * or connection requests on the CSR API LPC Port.
  *
- * The CsrApiRequestThread routine handles incoming messages or connection
- * requests on the CSR API LPC Port.
+ * @param[in]   Parameter
+ * System-default user-defined parameter. Unused.
  *
- * @param Parameter
- *        System-default user-defined parameter. Unused.
+ * @return
+ * The thread exit code, if the thread is terminated.
  *
- * @return The thread exit code, if the thread is terminated.
- *
- * @remarks Before listening on the port, the routine will first attempt
- *          to connect to the user subsystem.
- *
- *--*/
-NTSTATUS
+ * @remarks
+ * Before listening on the port, the routine will first attempt
+ * to connect to the User subsystem.
+ **/
+ULONG
 NTAPI
-CsrApiRequestThread(IN PVOID Parameter)
+CsrApiRequestThread(
+    _In_ PVOID Parameter)
 {
     PTEB Teb = NtCurrentTeb();
     LARGE_INTEGER TimeOut;
@@ -914,11 +915,11 @@ CsrApiPortInitialize(VOID)
     CsrApiPortName.Buffer = RtlAllocateHeap(CsrHeap, 0, Size);
     if (!CsrApiPortName.Buffer) return STATUS_NO_MEMORY;
 
-    /* Setup the rest of the empty string */
+    /* Setup the Port Name string */
     CsrApiPortName.Length = 0;
     CsrApiPortName.MaximumLength = (USHORT)Size;
     RtlAppendUnicodeStringToString(&CsrApiPortName, &CsrDirectoryName);
-    RtlAppendUnicodeToString(&CsrApiPortName, UNICODE_PATH_SEP);
+    RtlAppendUnicodeToString(&CsrApiPortName, L"\\");
     RtlAppendUnicodeToString(&CsrApiPortName, CSR_PORT_NAME);
     if (CsrDebug & 1)
     {
@@ -959,8 +960,8 @@ CsrApiPortInitialize(VOID)
                                          0,
                                          0,
                                          0,
-                                         (PVOID)CsrApiRequestThread,
-                                         (PVOID)hRequestEvent,
+                                         CsrApiRequestThread,
+                                         hRequestEvent,
                                          &hThread,
                                          &ClientId);
             if (NT_SUCCESS(Status))

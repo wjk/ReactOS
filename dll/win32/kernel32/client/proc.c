@@ -609,7 +609,6 @@ BasePushProcessParameters(IN ULONG ParameterFlags,
     if (lpEnvironment)
     {
         /* We should've made it part of the parameters block, enforce this */
-        ASSERT(ProcessParameters->Environment == lpEnvironment);
         lpEnvironment = ProcessParameters->Environment;
     }
     else
@@ -908,6 +907,56 @@ SetProcessAffinityMask(IN HANDLE hProcess,
 
     /* Everything was ok */
     return TRUE;
+}
+
+#define THEONLYGROUP 0 // Fake support for a single group
+
+/*
+ * @implemented
+ */
+WORD
+WINAPI
+GetActiveProcessorGroupCount(VOID)
+{
+    STUB; // FIXME: Real group support
+    return 1; // TODO: SharedUserData->ActiveGroupCount?
+}
+
+static DWORD
+GetProcessorCountInfo(IN WORD GroupNumber, IN BOOL Maximum)
+{
+    SYSTEM_INFO info;
+
+    // TODO: SharedUserData->ActiveProcessorCount for ALL_PROCESSOR_GROUPS?
+    if (GroupNumber != ALL_PROCESSOR_GROUPS && GroupNumber != THEONLYGROUP)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+    GetNativeSystemInfo(&info);
+    return info.dwNumberOfProcessors;
+}
+
+/*
+ * @implemented
+ */
+DWORD
+WINAPI
+GetActiveProcessorCount(IN WORD GroupNumber)
+{
+    STUB; // FIXME: Real group support
+    return GetProcessorCountInfo(GroupNumber, FALSE);
+}
+
+/*
+ * @implemented
+ */
+DWORD
+WINAPI
+GetMaximumProcessorCount(IN WORD GroupNumber)
+{
+    STUB; // FIXME: Real group support
+    return GetProcessorCountInfo(GroupNumber, TRUE);
 }
 
 /*
@@ -3658,10 +3707,10 @@ StartScan:
                                                       NULL);
     }
 
-    /* Check if we're going to be debugged */
-    if (dwCreationFlags & DEBUG_PROCESS)
+    /* CREATE_BREAKAWAY_FROM_JOB allows the child process to break
+     * away from the job associated with the calling process */
+    if (dwCreationFlags & CREATE_BREAKAWAY_FROM_JOB)
     {
-        /* Set process flag */
         Flags |= PROCESS_CREATE_FLAGS_BREAKAWAY;
     }
 
