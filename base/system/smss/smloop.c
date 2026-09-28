@@ -255,7 +255,7 @@ SmpStopCsr(IN PSM_API_MSG SmApiMsg,
     return STATUS_NOT_IMPLEMENTED;
 }
 
-PSM_API_HANDLER SmpApiDispatch[SmpMaxApiNumber - SmpCreateForeignSessionApi] =
+const PSM_API_HANDLER SmpApiDispatch[SmpMaxApiNumber - SmpCreateForeignSessionApi] =
 {
     SmpCreateForeignSession,
     SmpSessionComplete,
@@ -265,6 +265,20 @@ PSM_API_HANDLER SmpApiDispatch[SmpMaxApiNumber - SmpCreateForeignSessionApi] =
     SmpStartCsr,
     SmpStopCsr
 };
+
+#if DBG
+const PCSTR SmpApiName[SmpMaxApiNumber - SmpCreateForeignSessionApi + 1] =
+{
+    "SmCreateForeignSession",
+    "SmSessionComplete",
+    "SmTerminateForeignSession",
+    "SmExecPgm",
+    "SmLoadDeferedSubsystem",
+    "SmStartCsr",
+    "SmStopCsr",
+    "Unknown Sm Api Number"
+};
+#endif
 
 /* FUNCTIONS ******************************************************************/
 
@@ -482,11 +496,19 @@ SmpApiLoop(
 
             /* An actual API message */
             default:
+            {
                 if (!ClientContext)
                 {
                     ReplyMsg = NULL;
                     break;
                 }
+
+#if DBG
+                DPRINT("SMSS: %s Api Request received from %lx.%lx\n",
+                       SmpApiName[min(RequestMsg.ApiNumber, SmpMaxApiNumber)],
+                       RequestMsg.h.ClientId.UniqueProcess,
+                       RequestMsg.h.ClientId.UniqueThread);
+#endif
 
                 RequestMsg.ReturnValue = STATUS_PENDING;
 
@@ -494,28 +516,38 @@ SmpApiLoop(
                 if (RequestMsg.ApiNumber >= SmpMaxApiNumber)
                 {
                     /* It isn't, fail */
-                    DPRINT1("Invalid API: %lx\n", RequestMsg.ApiNumber);
+                    DPRINT1("SMSS: Invalid Sm Api Number %lx\n", RequestMsg.ApiNumber);
                     Status = STATUS_NOT_IMPLEMENTED;
                 }
                 else if ((RequestMsg.ApiNumber <= SmpTerminateForeignSessionApi) &&
                          !(ClientContext->Subsystem))
                 {
                     /* It's valid, but doesn't have a subsystem with it */
-                    DPRINT1("Invalid session API\n");
+                    DPRINT1("SMSS: Invalid session API\n");
                     Status = STATUS_INVALID_PARAMETER;
                 }
                 else
                 {
                     /* It's totally okay, so call the dispatcher for it */
-                    Status = SmpApiDispatch[RequestMsg.ApiNumber](&RequestMsg,
-                                                                  ClientContext,
-                                                                  SmApiPort);
+                    _SEH2_TRY
+                    {
+                        Status = SmpApiDispatch[RequestMsg.ApiNumber](&RequestMsg,
+                                                                      ClientContext,
+                                                                      SmApiPort);
+                    }
+                    _SEH2_EXCEPT(SmpUnhandledExceptionFilter(_SEH2_GetExceptionInformation()))
+                    {
+                        ReplyMsg = NULL;
+                        _SEH2_YIELD(break);
+                    }
+                    _SEH2_END;
                 }
 
                 /* Write the result value and return the message back */
                 RequestMsg.ReturnValue = Status;
                 ReplyMsg = &RequestMsg;
                 break;
+            }
         }
     }
 
